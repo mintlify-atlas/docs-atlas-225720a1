@@ -1,0 +1,113 @@
+{
+  "projectType": "saas",
+  "projectName": "Alternativa Verde",
+  "projectDescription": "Operational management portal for tracking used vegetable oil collection, dispatches, and inventory across multiple collection centers.",
+  "theme": "almond",
+  "primaryColor": "#2d5016",
+  "lightColor": "#7cb342",
+  "darkColor": "#1b3410",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/dashboard",
+              "features/tickets",
+              "features/generators",
+              "features/vehicles",
+              "features/dispatches",
+              "features/history"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/collection-centers",
+              "configuration/team-management",
+              "configuration/settings"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/database-schema",
+              "advanced/deployment",
+              "advanced/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/overview",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/tickets",
+              "api/generators",
+              "api/vehicles",
+              "api/dispatches",
+              "api/collection-centers",
+              "api/members"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multi-center operations management",
+    "Automatic ticket numbering by state and year",
+    "Material collection tracking (used vegetable oil)",
+    "Dispatch and logistics management",
+    "Generator (client) relationship management",
+    "Vehicle fleet tracking",
+    "Real-time dashboard and analytics",
+    "Excel export capabilities",
+    "PostgreSQL-backed data persistence"
+  ],
+  "publicApiSurface": [
+    "GET /api/tickets",
+    "POST /api/tickets",
+    "PUT /api/tickets/:id",
+    "DELETE /api/tickets/:id",
+    "GET /api/generators",
+    "POST /api/generators",
+    "PUT /api/generators/:id",
+    "DELETE /api/generators/:id",
+    "GET /api/vehicles",
+    "POST /api/vehicles",
+    "PUT /api/vehicles/:id",
+    "DELETE /api/vehicles/:id",
+    "GET /api/dispatches",
+    "POST /api/dispatches",
+    "PUT /api/dispatches/:id",
+    "DELETE /api/dispatches/:id",
+    "GET /api/collection-centers",
+    "POST /api/collection-centers",
+    "PUT /api/collection-centers/:id",
+    "GET /api/collection-center-members",
+    "POST /api/collection-center-members",
+    "PUT /api/collection-center-members/:id",
+    "GET /api/app-configuration",
+    "PUT /api/app-configuration"
+  ]
+}
