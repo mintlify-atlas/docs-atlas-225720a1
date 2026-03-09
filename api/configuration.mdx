@@ -1,0 +1,108 @@
+---
+title: "Configuration API"
+description: "Manage application configuration settings"
+---
+
+## Get Configuration
+
+`GET /api/configuration`
+
+Retrieve the current application configuration, including the active collection center.
+
+### Response
+
+<ResponseField name="collectionCenterId" type="string | null">
+  The ID of the currently active collection center, or `null` if not configured
+</ResponseField>
+
+```bash
+curl http://localhost:4000/api/configuration
+```
+
+**Response:**
+```json
+{
+  "collectionCenterId": "center-abc123"
+}
+```
+
+---
+
+## Update Configuration
+
+`PUT /api/configuration`
+
+Update the application configuration. This endpoint sets the active collection center and automatically assigns unassigned data to the center if it's the only center in the system.
+
+### Request Body
+
+<ParamField body="collectionCenterId" type="string | null">
+  The ID of the collection center to set as active. Pass `null` to clear the active center.
+</ParamField>
+
+### Automatic Data Assignment
+
+When setting an active collection center, if there is exactly one collection center in the system, the API automatically assigns any unassigned data to that center:
+
+- Generators with `collection_center_id IS NULL` → assigned to the active center
+- Vehicles with `collection_center_id IS NULL` → assigned to the active center  
+- Tickets with `collection_center_id IS NULL` → assigned to the active center
+
+This ensures data consistency when transitioning from a single-center to a multi-center setup.
+
+### Response
+
+<ResponseField name="collectionCenterId" type="string | null">
+  The ID of the newly active collection center
+</ResponseField>
+
+```bash
+curl -X PUT http://localhost:4000/api/configuration \
+  -H "Content-Type: application/json" \
+  -d '{"collectionCenterId": "center-abc123"}'
+```
+
+**Response:**
+```json
+{
+  "collectionCenterId": "center-abc123"
+}
+```
+
+---
+
+## Transaction Logic
+
+The configuration update uses a database transaction to ensure atomicity:
+
+1. Begin transaction
+2. Insert or update the app_configuration record (single-row table with id=1)
+3. If the active center is set and there's only one center in the system:
+   - Assign all unassigned generators to the center
+   - Assign all unassigned vehicles to the center
+   - Assign all unassigned tickets to the center
+4. Commit transaction
+
+If any step fails, the entire transaction is rolled back.
+
+---
+
+## Error Responses
+
+| Status | Description |
+|--------|-------------|
+| 500 | Database error during retrieval or update |
+
+---
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Collection Centers API" icon="building" href="/api/collection-centers">
+    Manage collection centers
+  </Card>
+  
+  <Card title="Dashboard" icon="chart-line" href="/features/dashboard">
+    View and change the active center in the UI
+  </Card>
+</CardGroup>

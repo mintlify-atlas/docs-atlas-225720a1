@@ -1,0 +1,582 @@
+---
+title: Deployment
+description: Production deployment guide for Alternativa Verde
+---
+
+## Overview
+
+Alternativa Verde consists of two components:
+
+1. **Frontend**: React application built with Vite
+2. **Backend**: Express.js API server with PostgreSQL database
+
+Both components must be deployed and configured for production use.
+
+## Prerequisites
+
+- Node.js (version 18 or higher recommended)
+- PostgreSQL (version 13 or higher)
+- pnpm package manager
+- A server with sufficient resources (minimum 1GB RAM, 10GB storage)
+
+## Database Setup
+
+<Steps>
+
+<Step title="Install PostgreSQL">
+
+Install PostgreSQL on your production server:
+
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+# Enable and start PostgreSQL service
+sudo systemctl enable postgresql
+sudo systemctl start postgresql
+```
+
+</Step>
+
+<Step title="Create Database and User">
+
+Create a dedicated database and user for Alternativa Verde:
+
+```bash
+# Access PostgreSQL
+sudo -u postgres psql
+
+# Create database
+CREATE DATABASE tickets;
+
+# Create user (replace with secure password)
+CREATE USER av_user WITH ENCRYPTED PASSWORD 'your_secure_password_here';
+
+# Grant privileges
+GRANT ALL PRIVILEGES ON DATABASE tickets TO av_user;
+
+# Exit
+\q
+```
+
+<Warning>
+Always use a strong, randomly generated password for production databases. Never use default or simple passwords.
+</Warning>
+
+</Step>
+
+<Step title="Load Schema">
+
+Load the database schema:
+
+```bash
+psql -U av_user -d tickets -f db/schema.sql
+```
+
+Optionally, load seed data for testing:
+
+```bash
+psql -U av_user -d tickets -f db/seed.sql
+```
+
+</Step>
+
+<Step title="Configure PostgreSQL for Production">
+
+Edit PostgreSQL configuration for production performance:
+
+```bash
+sudo nano /etc/postgresql/13/main/postgresql.conf
+```
+
+Recommended settings:
+
+```ini
+# Connection settings
+max_connections = 100
+
+# Memory settings (adjust based on available RAM)
+shared_buffers = 256MB
+effective_cache_size = 1GB
+work_mem = 4MB
+maintenance_work_mem = 64MB
+
+# Write-ahead log
+wal_level = replica
+max_wal_size = 1GB
+min_wal_size = 80MB
+```
+
+Restart PostgreSQL:
+
+```bash
+sudo systemctl restart postgresql
+```
+
+</Step>
+
+</Steps>
+
+## Environment Configuration
+
+<Steps>
+
+<Step title="Create Production .env File">
+
+Create a `.env` file in the project root with production settings:
+
+```bash
+# PostgreSQL connection
+PGHOST=127.0.0.1
+PGPORT=5432
+PGUSER=av_user
+PGPASSWORD=your_secure_password_here
+PGDATABASE=tickets
+
+# API Server Port
+PORT=4000
+```
+
+<Warning>
+Never commit the `.env` file to version control. Add it to `.gitignore`.
+</Warning>
+
+</Step>
+
+<Step title="Configure File Permissions">
+
+Secure the environment file:
+
+```bash
+chmod 600 .env
+chown your_user:your_user .env
+```
+
+</Step>
+
+</Steps>
+
+## Application Deployment
+
+<Steps>
+
+<Step title="Install Dependencies">
+
+Install all required dependencies:
+
+```bash
+pnpm install --frozen-lockfile
+```
+
+The `--frozen-lockfile` flag ensures exact dependency versions from `pnpm-lock.yaml`.
+
+</Step>
+
+<Step title="Build the Frontend">
+
+Build the React application for production:
+
+```bash
+pnpm build
+```
+
+This command:
+- Bundles the React application with Vite
+- Optimizes assets (minification, tree-shaking)
+- Outputs static files to `dist/` directory
+
+From `package.json`:
+```json
+"build": "vite build"
+```
+
+</Step>
+
+<Step title="Configure Vite Build Settings">
+
+The build is configured in `vite.config.ts`:
+
+```typescript
+export default defineConfig(({ mode }) => {
+  return {
+    server: {
+      port: 3000,
+      host: '0.0.0.0',
+    },
+    plugins: [react()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '.'),
+      }
+    }
+  };
+});
+```
+
+- **port**: Development server port (3000)
+- **host**: Bind to all interfaces for container deployments
+
+</Step>
+
+<Step title="Start the API Server">
+
+Start the Express API server:
+
+```bash
+node server/index.js
+```
+
+The server will start on the port specified in `.env` (default: 4000):
+
+```javascript
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log(`API server listening on http://localhost:${PORT}`);
+});
+```
+
+</Step>
+
+</Steps>
+
+## Process Management
+
+### Using PM2 (Recommended)
+
+PM2 is a production process manager for Node.js:
+
+<Steps>
+
+<Step title="Install PM2">
+
+```bash
+npm install -g pm2
+```
+
+</Step>
+
+<Step title="Create PM2 Configuration">
+
+Create `ecosystem.config.js`:
+
+```javascript
+module.exports = {
+  apps: [{
+    name: 'alternativa-verde-api',
+    script: 'server/index.js',
+    instances: 1,
+    exec_mode: 'cluster',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 4000
+    },
+    error_file: './logs/api-error.log',
+    out_file: './logs/api-out.log',
+    time: true
+  }]
+};
+```
+
+</Step>
+
+<Step title="Start with PM2">
+
+```bash
+# Start the application
+pm2 start ecosystem.config.js
+
+# View status
+pm2 status
+
+# View logs
+pm2 logs alternativa-verde-api
+
+# Stop application
+pm2 stop alternativa-verde-api
+
+# Restart application
+pm2 restart alternativa-verde-api
+```
+
+</Step>
+
+<Step title="Enable PM2 Startup">
+
+Configure PM2 to start on system boot:
+
+```bash
+pm2 startup
+pm2 save
+```
+
+</Step>
+
+</Steps>
+
+## Serving Static Files
+
+### Option 1: Using Nginx (Recommended)
+
+Configure Nginx to serve the frontend and proxy API requests:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # Serve frontend static files
+    root /path/to/alternativa-verde/dist;
+    index index.html;
+
+    # Frontend routing
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy API requests
+    location /api {
+        proxy_pass http://localhost:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+}
+```
+
+Enable the site:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/alternativa-verde /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Option 2: Using Express to Serve Static Files
+
+Modify `server/index.js` to serve the built frontend:
+
+```javascript
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static files from dist
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// All other routes return index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+```
+
+## SSL/HTTPS Configuration
+
+<Warning>
+Always use HTTPS in production to protect sensitive data in transit.
+</Warning>
+
+### Using Certbot with Nginx
+
+```bash
+# Install Certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Obtain and install certificate
+sudo certbot --nginx -d your-domain.com
+
+# Enable auto-renewal
+sudo certbot renew --dry-run
+```
+
+## Port Configuration
+
+### Default Ports
+
+- **Frontend (dev)**: 3000 (configured in `vite.config.ts`)
+- **Backend API**: 4000 (configured in `.env` or defaults to 4000)
+
+### Changing Ports
+
+**Backend API Port:**
+
+Update the `PORT` variable in `.env`:
+
+```bash
+PORT=5000
+```
+
+**Frontend Development Port:**
+
+Modify `vite.config.ts`:
+
+```typescript
+server: {
+  port: 3001,  // Change this value
+  host: '0.0.0.0',
+}
+```
+
+## Security Considerations
+
+<Warning>
+Implement these security measures before going to production.
+</Warning>
+
+### Database Security
+
+1. **Strong passwords**: Use randomly generated passwords (minimum 20 characters)
+2. **Limited privileges**: Grant only necessary database permissions
+3. **Firewall rules**: Restrict PostgreSQL access to localhost or specific IPs
+4. **Regular backups**: Implement automated backup strategy
+
+```bash
+# Configure PostgreSQL to listen only on localhost
+# Edit /etc/postgresql/13/main/postgresql.conf
+listen_addresses = 'localhost'
+```
+
+### Application Security
+
+1. **Environment variables**: Never expose `.env` file
+2. **CORS configuration**: Restrict to specific domains in production
+3. **Rate limiting**: Implement API rate limiting
+4. **Input validation**: The API uses parameterized queries to prevent SQL injection
+5. **HTTPS only**: Enforce HTTPS for all connections
+
+### CORS Configuration
+
+Update `server/index.js` for production:
+
+```javascript
+import cors from 'cors';
+
+// Development (current)
+app.use(cors());
+
+// Production (recommended)
+app.use(cors({
+  origin: 'https://your-domain.com',
+  credentials: true
+}));
+```
+
+## Monitoring and Logs
+
+### Application Logs
+
+With PM2:
+
+```bash
+# View logs in real-time
+pm2 logs alternativa-verde-api
+
+# View specific log files
+tail -f logs/api-error.log
+tail -f logs/api-out.log
+```
+
+### Database Logs
+
+PostgreSQL logs location:
+
+```bash
+/var/log/postgresql/postgresql-13-main.log
+```
+
+### System Monitoring
+
+```bash
+# Monitor system resources
+pm2 monit
+
+# Check application metrics
+pm2 describe alternativa-verde-api
+```
+
+## Backup Strategy
+
+### Database Backups
+
+Create automated PostgreSQL backups:
+
+```bash
+#!/bin/bash
+# backup-db.sh
+
+BACKUP_DIR="/backups/alternativa-verde"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/tickets_$DATE.sql"
+
+mkdir -p $BACKUP_DIR
+pg_dump -U av_user tickets > $BACKUP_FILE
+gzip $BACKUP_FILE
+
+# Keep only last 30 days of backups
+find $BACKUP_DIR -name "tickets_*.sql.gz" -mtime +30 -delete
+```
+
+Add to cron for daily backups:
+
+```bash
+crontab -e
+
+# Add line:
+0 2 * * * /path/to/backup-db.sh
+```
+
+## Health Checks
+
+Implement health check endpoint in `server/index.js`:
+
+```javascript
+app.get('/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'healthy', timestamp: new Date() });
+  } catch (error) {
+    res.status(503).json({ status: 'unhealthy', error: error.message });
+  }
+});
+```
+
+## Scaling Considerations
+
+### Horizontal Scaling
+
+- Run multiple API server instances behind a load balancer
+- Use PM2 cluster mode: `exec_mode: 'cluster'`
+- Configure session sharing if needed
+
+### Database Connection Pooling
+
+The application uses `pg` connection pooling (configured in `server/index.js`):
+
+```javascript
+const pool = new Pool({
+  host: process.env.PGHOST || '127.0.0.1',
+  port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
+  user: process.env.PGUSER || 'postgres',
+  password: process.env.PGPASSWORD || undefined,
+  database: process.env.PGDATABASE || 'tickets'
+});
+```
+
+Default pool size is 10 connections. Adjust for high-traffic scenarios.
+
+## Troubleshooting
+
+See the [Troubleshooting](/advanced/troubleshooting) page for common deployment issues.

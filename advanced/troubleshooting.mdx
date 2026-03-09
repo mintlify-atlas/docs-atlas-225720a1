@@ -1,0 +1,728 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for Alternativa Verde
+---
+
+## Database Issues
+
+<Accordion title="Cannot connect to PostgreSQL database">
+
+### Symptoms
+
+- API server fails to start with connection error
+- Error message: `connection to server at "127.0.0.1", port 5432 failed`
+- Database queries timeout or fail
+
+### Solutions
+
+**1. Check if PostgreSQL is running:**
+
+```bash
+# Check service status
+sudo systemctl status postgresql
+
+# Start if not running
+sudo systemctl start postgresql
+```
+
+**2. Verify connection parameters in `.env`:**
+
+```bash
+PGHOST=127.0.0.1
+PGPORT=5432
+PGUSER=postgres
+PGPASSWORD=your_password
+PGDATABASE=tickets
+```
+
+**3. Test connection manually:**
+
+```bash
+psql -h 127.0.0.1 -p 5432 -U postgres -d tickets
+```
+
+**4. Check PostgreSQL listening address:**
+
+```bash
+# Edit postgresql.conf
+sudo nano /etc/postgresql/13/main/postgresql.conf
+
+# Ensure this line exists:
+listen_addresses = 'localhost'
+
+# Restart PostgreSQL
+sudo systemctl restart postgresql
+```
+
+**5. Verify pg_hba.conf allows local connections:**
+
+```bash
+sudo nano /etc/postgresql/13/main/pg_hba.conf
+
+# Add this line if not present:
+host    all             all             127.0.0.1/32            md5
+
+# Reload configuration
+sudo systemctl reload postgresql
+```
+
+<Tip>
+If using Docker, ensure the PostgreSQL container is on the same network and use the container name as the host.
+</Tip>
+
+</Accordion>
+
+<Accordion title="Database schema not found or missing tables">
+
+### Symptoms
+
+- Error: `relation "collection_centers" does not exist`
+- API endpoints return 500 errors
+- Empty database after creation
+
+### Solutions
+
+**1. Verify database exists:**
+
+```bash
+psql -U postgres -l | grep tickets
+```
+
+**2. Load the schema:**
+
+```bash
+psql -U postgres -d tickets -f db/schema.sql
+```
+
+**3. Verify tables were created:**
+
+```bash
+psql -U postgres -d tickets -c "\dt"
+```
+
+Expected output should show 7 tables:
+- app_configuration
+- collection_center_members
+- collection_centers
+- dispatches
+- generators
+- tickets
+- vehicles
+
+**4. Check for errors during schema load:**
+
+Review the output when running `schema.sql`. Look for ERROR messages indicating permission issues or syntax problems.
+
+</Accordion>
+
+<Accordion title="pg_trgm extension not found">
+
+### Symptoms
+
+- Error: `extension "pg_trgm" does not exist`
+- Schema fails to load
+- Search functionality not working
+
+### Solutions
+
+**1. Install PostgreSQL contrib package:**
+
+```bash
+# Ubuntu/Debian
+sudo apt install postgresql-contrib
+
+# Restart PostgreSQL
+sudo systemctl restart postgresql
+```
+
+**2. Enable extension manually:**
+
+```bash
+psql -U postgres -d tickets
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+\q
+```
+
+**3. Verify extension is installed:**
+
+```bash
+psql -U postgres -d tickets -c "\dx"
+```
+
+You should see `pg_trgm` in the list of extensions.
+
+</Accordion>
+
+<Accordion title="Database connection pool exhausted">
+
+### Symptoms
+
+- Slow API responses under load
+- Error: `remaining connection slots are reserved`
+- Application hangs waiting for database connections
+
+### Solutions
+
+**1. Increase PostgreSQL max_connections:**
+
+```bash
+sudo nano /etc/postgresql/13/main/postgresql.conf
+
+# Increase from default (100) to higher value
+max_connections = 200
+
+# Restart PostgreSQL
+sudo systemctl restart postgresql
+```
+
+**2. Configure connection pool size in application:**
+
+Modify `server/index.js`:
+
+```javascript
+const pool = new Pool({
+  host: process.env.PGHOST || '127.0.0.1',
+  port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432,
+  user: process.env.PGUSER || 'postgres',
+  password: process.env.PGPASSWORD || undefined,
+  database: process.env.PGDATABASE || 'tickets',
+  max: 20,  // Maximum pool size
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+```
+
+**3. Check for connection leaks:**
+
+Ensure all database clients are properly released:
+
+```javascript
+const client = await pool.connect();
+try {
+  // Your queries
+} finally {
+  client.release();  // Always release!
+}
+```
+
+<Tip>
+Monitor active connections: `SELECT count(*) FROM pg_stat_activity;`
+</Tip>
+
+</Accordion>
+
+## Application Issues
+
+<Accordion title="Port already in use (EADDRINUSE)">
+
+### Symptoms
+
+- Error: `Error: listen EADDRINUSE: address already in use :::4000`
+- Server fails to start
+- Port conflict warnings
+
+### Solutions
+
+**1. Find process using the port:**
+
+```bash
+# For port 4000 (API server)
+sudo lsof -i :4000
+
+# Or using netstat
+sudo netstat -tulpn | grep :4000
+```
+
+**2. Kill the conflicting process:**
+
+```bash
+# Replace PID with actual process ID from previous command
+kill -9 PID
+```
+
+**3. Change the port in `.env`:**
+
+```bash
+PORT=5000  # Use different port
+```
+
+**4. For frontend port conflicts (3000):**
+
+Modify `vite.config.ts`:
+
+```typescript
+server: {
+  port: 3001,  // Change to available port
+  host: '0.0.0.0',
+}
+```
+
+<Tip>
+Use PM2 to manage your process: `pm2 stop alternativa-verde-api` instead of killing manually.
+</Tip>
+
+</Accordion>
+
+<Accordion title="Build errors with npm/pnpm">
+
+### Symptoms
+
+- `pnpm build` fails with errors
+- TypeScript compilation errors
+- Module not found errors
+
+### Solutions
+
+**1. Clear node_modules and reinstall:**
+
+```bash
+rm -rf node_modules pnpm-lock.yaml
+pnpm install
+```
+
+**2. Check Node.js version:**
+
+```bash
+node --version  # Should be 18.x or higher
+```
+
+If needed, upgrade Node.js:
+
+```bash
+# Using nvm
+nvm install 18
+nvm use 18
+```
+
+**3. Verify all dependencies are installed:**
+
+```bash
+pnpm install --frozen-lockfile
+```
+
+**4. Check for TypeScript errors:**
+
+```bash
+npx tsc --noEmit
+```
+
+**5. Clear Vite cache:**
+
+```bash
+rm -rf node_modules/.vite
+pnpm build
+```
+
+</Accordion>
+
+<Accordion title="CORS errors in browser">
+
+### Symptoms
+
+- Browser console shows: `Access to fetch blocked by CORS policy`
+- API requests fail from frontend
+- Network tab shows OPTIONS requests failing
+
+### Solutions
+
+**1. Check CORS configuration in `server/index.js`:**
+
+```javascript
+import cors from 'cors';
+
+// Allow all origins (development)
+app.use(cors());
+
+// Or specify allowed origin
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+```
+
+**2. Verify API server is running:**
+
+```bash
+curl http://localhost:4000/api/generators
+```
+
+**3. Check if frontend is making requests to correct URL:**
+
+In your frontend code, ensure API base URL is correct:
+
+```javascript
+const API_BASE = 'http://localhost:4000/api';
+```
+
+**4. For production, whitelist your domain:**
+
+```javascript
+app.use(cors({
+  origin: 'https://your-domain.com',
+  credentials: true
+}));
+```
+
+</Accordion>
+
+<Accordion title="API returns 500 Internal Server Error">
+
+### Symptoms
+
+- API endpoints return 500 status
+- No specific error message to client
+- Generic server error
+
+### Solutions
+
+**1. Check API server logs:**
+
+```bash
+# If using PM2
+pm2 logs alternativa-verde-api
+
+# Or check console output
+node server/index.js
+```
+
+**2. Common causes:**
+
+- Database connection failed (see Database Issues above)
+- Missing environment variables in `.env`
+- Database table/column doesn't exist
+- Invalid SQL query
+- Unhandled exception in route handler
+
+**3. Enable detailed error logging:**
+
+Add to `server/index.js`:
+
+```javascript
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+```
+
+**4. Test database connection:**
+
+```javascript
+// Add health check endpoint
+app.get('/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok' });
+  } catch (error) {
+    res.status(503).json({ status: 'error', message: error.message });
+  }
+});
+```
+
+</Accordion>
+
+## Migration and Data Issues
+
+<Accordion title="Ticket number generation fails">
+
+### Symptoms
+
+- Error when creating tickets
+- Message: `collection center not configured`
+- Ticket numbers not sequential
+
+### Solutions
+
+**1. Configure active collection center:**
+
+In the application, go to Configuration module and select an active collection center.
+
+Or manually in database:
+
+```sql
+-- Update app_configuration with valid center ID
+UPDATE app_configuration 
+SET collection_center_id = 'cc_1' 
+WHERE id = 1;
+```
+
+**2. Verify collection center exists:**
+
+```sql
+SELECT * FROM collection_centers;
+```
+
+If empty, create a collection center first.
+
+**3. Check state field is populated:**
+
+Ticket number generation uses the state field. Ensure it's not NULL:
+
+```sql
+UPDATE collection_centers 
+SET state = 'Bolívar' 
+WHERE id = 'cc_1';
+```
+
+**4. Review ticket numbering logic:**
+
+Ticket numbers follow format: `AV-[STATE_CODE]-[YEAR]-[SEQUENCE]`
+
+The state code is derived from the first 3 letters of the state name.
+
+</Accordion>
+
+<Accordion title="Data integrity issues after migration">
+
+### Symptoms
+
+- Foreign key constraint violations
+- NULL values in required fields
+- Orphaned records
+
+### Solutions
+
+**1. Check for orphaned tickets:**
+
+```sql
+-- Find tickets with invalid generator_id
+SELECT * FROM tickets 
+WHERE generator_id NOT IN (SELECT id FROM generators);
+
+-- Fix by updating or deleting
+DELETE FROM tickets 
+WHERE generator_id NOT IN (SELECT id FROM generators);
+```
+
+**2. Verify foreign key constraints:**
+
+```sql
+-- List all foreign keys
+SELECT
+    tc.constraint_name,
+    tc.table_name,
+    kcu.column_name,
+    ccu.table_name AS foreign_table_name,
+    ccu.column_name AS foreign_column_name
+FROM information_schema.table_constraints AS tc
+JOIN information_schema.key_column_usage AS kcu
+    ON tc.constraint_name = kcu.constraint_name
+JOIN information_schema.constraint_column_usage AS ccu
+    ON ccu.constraint_name = tc.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY';
+```
+
+**3. Validate required fields:**
+
+```sql
+-- Check for NULL in NOT NULL columns
+SELECT * FROM generators WHERE name IS NULL;
+SELECT * FROM tickets WHERE generator_name IS NULL;
+```
+
+</Accordion>
+
+<Accordion title="Seed data fails to load">
+
+### Symptoms
+
+- Error when running `pnpm db:seed`
+- Foreign key violations during seed
+- Duplicate key errors
+
+### Solutions
+
+**1. Ensure schema is loaded first:**
+
+```bash
+psql -U postgres -d tickets -f db/schema.sql
+psql -U postgres -d tickets -f db/seed.sql
+```
+
+**2. Clear existing data if needed:**
+
+```sql
+-- Careful: This deletes all data!
+TRUNCATE TABLE tickets CASCADE;
+TRUNCATE TABLE dispatches CASCADE;
+TRUNCATE TABLE generators CASCADE;
+TRUNCATE TABLE vehicles CASCADE;
+TRUNCATE TABLE collection_center_members CASCADE;
+TRUNCATE TABLE collection_centers CASCADE;
+```
+
+**3. Check for duplicate IDs:**
+
+The seed file may conflict with existing data. Review the IDs in `db/seed.sql` and adjust if needed.
+
+</Accordion>
+
+## Performance Issues
+
+<Accordion title="Slow query performance">
+
+### Symptoms
+
+- API endpoints take several seconds to respond
+- Dashboard loads slowly
+- Ticket list pagination is slow
+
+### Solutions
+
+**1. Verify indexes are created:**
+
+```sql
+-- List all indexes
+SELECT tablename, indexname, indexdef 
+FROM pg_indexes 
+WHERE schemaname = 'public'
+ORDER BY tablename;
+```
+
+Expected indexes (from schema.sql):
+- idx_tickets_generator_id
+- idx_tickets_date
+- idx_tickets_created_at
+- idx_tickets_ticket_number_trgm
+- idx_tickets_generator_name_trgm
+- And more...
+
+**2. Analyze query performance:**
+
+```sql
+EXPLAIN ANALYZE 
+SELECT * FROM tickets 
+WHERE collection_center_id = 'cc_1' 
+ORDER BY created_at DESC 
+LIMIT 50;
+```
+
+Look for "Seq Scan" (slow) vs "Index Scan" (fast).
+
+**3. Update table statistics:**
+
+```sql
+ANALYZE tickets;
+ANALYZE generators;
+ANALYZE dispatches;
+```
+
+**4. Optimize date queries:**
+
+The application converts TEXT dates to DATE for queries. Ensure proper format:
+
+```sql
+-- This should use indexes
+SELECT * FROM tickets 
+WHERE CASE
+  WHEN date ~ '^\d{1,2}/\d{1,2}/\d{4}$' THEN TO_DATE(date, 'DD/MM/YYYY')
+  ELSE NULL
+END >= '2026-01-01';
+```
+
+**5. Check database size:**
+
+```sql
+SELECT 
+  pg_size_pretty(pg_database_size('tickets')) as db_size;
+
+SELECT 
+  table_name,
+  pg_size_pretty(pg_total_relation_size(table_name::regclass)) as size
+FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY pg_total_relation_size(table_name::regclass) DESC;
+```
+
+<Tip>
+For large datasets, consider implementing pagination with cursor-based navigation instead of offset-based.
+</Tip>
+
+</Accordion>
+
+<Accordion title="High memory usage">
+
+### Symptoms
+
+- Server runs out of memory
+- Application crashes with OOM errors
+- Slow performance under load
+
+### Solutions
+
+**1. Monitor Node.js memory:**
+
+```bash
+pm2 monit  # If using PM2
+```
+
+**2. Adjust PostgreSQL shared_buffers:**
+
+```bash
+sudo nano /etc/postgresql/13/main/postgresql.conf
+
+# Set to ~25% of available RAM
+shared_buffers = 256MB  # For 1GB RAM system
+shared_buffers = 1GB    # For 4GB RAM system
+
+# Restart
+sudo systemctl restart postgresql
+```
+
+**3. Implement query limits:**
+
+Ensure all large queries use LIMIT:
+
+```javascript
+// Bad: No limit
+const result = await pool.query('SELECT * FROM tickets');
+
+// Good: With limit
+const result = await pool.query('SELECT * FROM tickets LIMIT 50');
+```
+
+**4. Use streaming for large exports:**
+
+When exporting large datasets, use streaming instead of loading everything into memory.
+
+</Accordion>
+
+## Prevention Best Practices
+
+<Tip>
+**Regular Maintenance Tasks:**
+
+1. Monitor disk space: `df -h`
+2. Check PostgreSQL logs: `tail -f /var/log/postgresql/postgresql-13-main.log`
+3. Review application logs: `pm2 logs`
+4. Update table statistics weekly: `ANALYZE;`
+5. Vacuum database monthly: `VACUUM ANALYZE;`
+6. Test backups regularly
+7. Monitor connection pool usage
+8. Review slow query logs
+
+**Development Best Practices:**
+
+1. Always use transactions for multi-step operations
+2. Release database clients in finally blocks
+3. Use parameterized queries (prevent SQL injection)
+4. Implement proper error handling
+5. Log errors with context
+6. Test with production-like data volumes
+7. Use connection pooling (already configured)
+8. Implement rate limiting for public endpoints
+</Tip>
+
+## Getting Help
+
+If you encounter issues not covered here:
+
+1. Check application logs for detailed error messages
+2. Review PostgreSQL logs for database errors
+3. Enable debug logging in development
+4. Verify environment configuration
+5. Test database connection manually
+6. Check system resources (disk, memory, CPU)

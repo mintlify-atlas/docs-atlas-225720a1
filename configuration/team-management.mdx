@@ -1,0 +1,144 @@
+---
+title: Team Management
+description: Manage team members, roles, and permissions for your collection center
+---
+
+## Overview
+
+Team management allows you to maintain a roster of staff members for your active collection center. Team members can be assigned as collectors when creating tickets, providing traceability for who handled each collection.
+
+## Understanding Team Members
+
+Each team member belongs to a specific collection center and includes:
+
+- **Full name**: The member's complete name
+- **Cedula**: National identification number (optional)
+- **Phone**: Contact phone number
+- **Role**: Job title or function (e.g., Recolector, Coordinador, Supervisor)
+- **Active status**: Whether the member is currently active
+
+## Center-Specific Members
+
+<Note>
+Team members are scoped to individual collection centers. When you switch the active center in the Dashboard, you'll see a different set of team members.
+</Note>
+
+Each collection center maintains its own team roster:
+
+- Members are only visible when their center is active
+- Members can only be assigned to tickets for their associated center
+- You must have an active center configured before adding team members
+
+## Managing Team Members
+
+### Accessing Team Management
+
+From the Configuration page:
+
+1. Ensure you have an active collection center set in the Dashboard
+2. Click the "Gestionar Miembros (Modal)" button
+3. A modal window will open showing all team members for the active center
+
+<Note>
+If you haven't configured an active center yet, you'll see an alert prompting you to set one in the Dashboard first.
+</Note>
+
+### Adding a Team Member
+
+In the team management modal:
+
+1. Fill in the member form with the following fields:
+   - **Nombre completo** (Full name): Required field for the member's complete name
+   - **Cédula** (ID number): Optional national identification number
+   - **Teléfono** (Phone): Contact phone number
+   - **Rol** (Role): Job title or position (defaults to "Recolector")
+
+2. Click "Agregar Miembro" to add the member to the center
+
+3. The member will immediately appear in the table below
+
+### Editing Team Members
+
+To update a member's information:
+
+1. Click the edit icon (pencil) in the Actions column of the member's row
+2. The form will populate with the member's current information
+3. Make your desired changes
+4. Click "Guardar Miembro" to save or "Cancelar edición" to discard changes
+
+### Deactivating Team Members
+
+To remove a team member:
+
+1. Click the delete icon (trash) in the Actions column
+2. Confirm the deletion when prompted
+3. The member will be permanently removed from the center
+
+<Warning>
+Deleting a member doesn't affect historical tickets where they were assigned as the collector. Their name remains in existing ticket records for audit purposes.
+</Warning>
+
+## Roles and Permissions
+
+The role field is a free-text field that allows you to specify any job title or function. Common roles include:
+
+- **Recolector** (Collector): Default role for field collection staff
+- **Coordinador** (Coordinator): Team leads or supervisors
+- **Supervisor**: Oversight and management
+- **Conductor** (Driver): Vehicle operators
+
+<Note>
+Roles are currently descriptive only and don't affect system permissions. All users with access to the application have the same capabilities regardless of their assigned role.
+</Note>
+
+## Team Members in Tickets
+
+When creating or editing a ticket, team members appear in the collector dropdown:
+
+- Only active members from the current center are shown
+- Selecting a member links them to the ticket for tracking
+- The member's full name is stored with the ticket
+- Member assignments help track who handled each collection
+
+## Member Information Table
+
+The team members table displays:
+
+- **Nombre** (Name): Full name of the team member
+- **Cédula** (ID): National identification number (shows "-" if not provided)
+- **Centro de Acopio** (Collection Center): The center where the member works
+- **Rol** (Role): Job title or function
+- **Teléfono** (Phone): Contact number
+- **Acciones** (Actions): Edit and delete buttons
+
+## Best Practices
+
+### Maintain Current Roster
+
+- Keep the team member list up to date with current staff
+- Deactivate or remove members who have left the organization
+- Update phone numbers and contact information regularly
+
+### Use Consistent Roles
+
+- Establish standard role names for your organization
+- Use the same role terminology across all centers
+- This makes reporting and analysis more consistent
+
+### Complete Information
+
+- Add phone numbers for all team members for easy contact
+- Include cedula numbers when available for formal identification
+- Use full legal names for official records
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Collection Centers" icon="building" href="/configuration/collection-centers">
+    Learn about setting up and managing collection centers
+  </Card>
+  
+  <Card title="Creating Tickets" icon="ticket" href="/features/tickets">
+    See how team members are assigned when creating tickets
+  </Card>
+</CardGroup>

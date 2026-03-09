@@ -1,0 +1,181 @@
+---
+title: Installation
+description: Step-by-step guide to install and configure Alternativa Verde on your system
+---
+
+## Prerequisites
+
+Before installing Alternativa Verde, ensure you have the following installed on your system:
+
+- **Node.js** (v18 or higher recommended)
+- **pnpm** package manager
+- **PostgreSQL** database (v12 or higher)
+
+<Note>
+If you don't have pnpm installed, you can install it globally with: `npm install -g pnpm`
+</Note>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Install Dependencies">
+    Clone or download the Alternativa Verde application, navigate to the project directory, and install all required dependencies:
+    
+    ```bash
+    pnpm install
+    ```
+    
+    This will install all necessary packages including:
+    - React for the user interface
+    - Express for the API server
+    - PostgreSQL client for database connectivity
+    - Additional utilities for charting and data export
+  </Step>
+
+  <Step title="Create PostgreSQL Database">
+    Connect to your PostgreSQL instance and create the database:
+    
+    ```bash
+    createdb tickets
+    ```
+    
+    Or using psql:
+    
+    ```sql
+    CREATE DATABASE tickets;
+    ```
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Create a `.env` file in the project root by copying the example file:
+    
+    ```bash
+    cp .env.example .env
+    ```
+    
+    Edit the `.env` file with your database connection details:
+    
+    ```bash
+    PGHOST=127.0.0.1
+    PGPORT=5432
+    PGUSER=postgres
+    PGPASSWORD=your_password_here
+    PGDATABASE=tickets
+    ```
+    
+    <Warning>
+    Make sure to replace `your_password_here` with your actual PostgreSQL password. Never commit the `.env` file to version control.
+    </Warning>
+  </Step>
+
+  <Step title="Load Database Schema">
+    Load the consolidated database schema which includes all tables, indexes, and extensions:
+    
+    ```bash
+    psql -U postgres -d tickets -f db/schema.sql
+    ```
+    
+    This creates the following tables:
+    - `collection_centers` - Collection center locations
+    - `collection_center_members` - Team members and roles
+    - `generators` - Material generators (clients)
+    - `vehicles` - Collection center vehicles
+    - `tickets` - Material entry records
+    - `dispatches` - Material exit records
+    - `app_configuration` - Application settings
+    
+    <Note>
+    The schema automatically installs the `pg_trgm` extension for efficient text searching.
+    </Note>
+  </Step>
+
+  <Step title="Load Initial Data (Optional)">
+    If you want to start with sample data for testing, load the seed data:
+    
+    ```bash
+    pnpm db:seed
+    ```
+    
+    <Tip>
+    Skip this step if you're setting up a production environment and want to start with a clean database.
+    </Tip>
+  </Step>
+
+  <Step title="Start the Application">
+    Start both the frontend application and the API server:
+    
+    ```bash
+    pnpm dev:all
+    ```
+    
+    This command runs:
+    - **Frontend**: React application (typically on port 5173)
+    - **API Server**: Express backend (typically on port 3000)
+    
+    Alternatively, you can run them separately:
+    
+    <CodeGroup>
+    ```bash Frontend Only
+    pnpm dev
+    ```
+    
+    ```bash API Server Only
+    pnpm server
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Verify Installation">
+    Open your browser and navigate to the application URL (typically `http://localhost:5173`). You should see the Alternativa Verde interface.
+    
+    <Note>
+    The exact port may vary depending on your configuration. Check the terminal output for the correct URL.
+    </Note>
+  </Step>
+</Steps>
+
+## Database Structure Overview
+
+The Alternativa Verde database uses PostgreSQL with the following key tables:
+
+| Table | Purpose |
+|-------|----------|
+| `collection_centers` | Stores collection center information (name, location, active status) |
+| `collection_center_members` | Team members with roles (collectors, administrators) |
+| `generators` | Material generators (clients) with collection modes |
+| `vehicles` | Collection center vehicles for material transport |
+| `tickets` | Entry tickets for incoming materials |
+| `dispatches` | Exit records for dispatched materials |
+| `app_configuration` | Active collection center setting |
+
+## Next Steps
+
+Now that you have Alternativa Verde installed, proceed to the Quick Start guide to configure your first collection center and create your first ticket:
+
+<Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+  Get operational in minutes by setting up your collection center and creating your first ticket
+</Card>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connection refused to PostgreSQL">
+    Make sure PostgreSQL is running and the connection details in your `.env` file are correct. Test the connection with:
+    
+    ```bash
+    psql -U postgres -d tickets
+    ```
+  </Accordion>
+  
+  <Accordion title="Port already in use">
+    If the default ports are already in use, you can modify the port configuration in the Vite and Express configuration files.
+  </Accordion>
+  
+  <Accordion title="pnpm command not found">
+    Install pnpm globally:
+    
+    ```bash
+    npm install -g pnpm
+    ```
+  </Accordion>
+</AccordionGroup>

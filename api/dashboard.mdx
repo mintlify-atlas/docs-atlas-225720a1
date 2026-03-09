@@ -1,0 +1,208 @@
+---
+title: "Dashboard API"
+description: "Analytics and statistics with date filtering"
+---
+
+## Get Dashboard Statistics
+
+`GET /api/dashboard`
+
+Retrieve aggregated statistics and analytics for the dashboard, including KPIs, recent tickets, and chart data for collection and dispatch trends.
+
+### Query Parameters
+
+<ParamField query="collectionCenterId" type="string">
+  Filter statistics by collection center ID. If not provided, uses the active collection center from configuration.
+</ParamField>
+
+<ParamField query="dateFrom" type="string">
+  Start date for filtering in DD/MM/YYYY format (e.g., "01/01/2026")
+</ParamField>
+
+<ParamField query="dateTo" type="string">
+  End date for filtering in DD/MM/YYYY format (e.g., "31/12/2026")
+</ParamField>
+
+<ParamField query="month" type="integer">
+  Filter by specific month (1-12)
+</ParamField>
+
+<ParamField query="year" type="integer">
+  Filter by specific year (e.g., 2026)
+</ParamField>
+
+<ParamField query="generatorId" type="string">
+  Filter statistics by a single generator ID
+</ParamField>
+
+<ParamField query="generatorIds" type="string">
+  Filter statistics by multiple generator IDs (comma-separated)
+</ParamField>
+
+### Response
+
+<ResponseField name="totalLiters" type="number">
+  Total liters collected (sum of all ticket quantities)
+</ResponseField>
+
+<ResponseField name="totalDispatched" type="number">
+  Total liters dispatched (sum of all dispatch quantities)
+</ResponseField>
+
+<ResponseField name="ticketCount" type="integer">
+  Total number of collection tickets
+</ResponseField>
+
+<ResponseField name="totalGens" type="integer">
+  Total number of unique generators (active clients)
+</ResponseField>
+
+<ResponseField name="lastFive" type="array">
+  Most recent 5 tickets (sorted by created_at DESC)
+  <Expandable title="Ticket Object">
+    <ResponseField name="id" type="string">
+      Ticket ID
+    </ResponseField>
+    <ResponseField name="ticketNumber" type="string">
+      Formatted ticket number (e.g., AV-ARA-2026-0001)
+    </ResponseField>
+    <ResponseField name="date" type="string">
+      Collection date
+    </ResponseField>
+    <ResponseField name="generatorName" type="string">
+      Generator (client) name
+    </ResponseField>
+    <ResponseField name="quantity" type="number">
+      Quantity collected in liters
+    </ResponseField>
+    <ResponseField name="materialType" type="string">
+      Material type description
+    </ResponseField>
+    <ResponseField name="materialState" type="string">
+      Material state (Filtrado, Bruto, Mezcla)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="chartData" type="array">
+  Daily aggregated data for volume trends chart
+  <Expandable title="Chart Point">
+    <ResponseField name="date" type="string">
+      Date in DD/MM/YYYY or YYYY-MM-DD format
+    </ResponseField>
+    <ResponseField name="litersIn" type="number">
+      Total liters collected on this date (from tickets)
+    </ResponseField>
+    <ResponseField name="litersOut" type="number">
+      Total liters dispatched on this date (from dispatches)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Request
+
+```bash
+# Get dashboard for active center, filtered by month
+curl "http://localhost:4000/api/dashboard?month=1&year=2026"
+```
+
+```bash
+# Get dashboard for specific center and date range
+curl "http://localhost:4000/api/dashboard?collectionCenterId=center-123&dateFrom=01/01/2026&dateTo=31/01/2026"
+```
+
+```bash
+# Get dashboard filtered by generator
+curl "http://localhost:4000/api/dashboard?generatorId=gen-abc&month=2&year=2026"
+```
+
+### Example Response
+
+```json
+{
+  "totalLiters": 12450.5,
+  "totalDispatched": 10200.0,
+  "ticketCount": 248,
+  "totalGens": 42,
+  "lastFive": [
+    {
+      "id": "ticket-xyz",
+      "ticketNumber": "AV-ARA-2026-0248",
+      "date": "15/01/2026",
+      "generatorName": "Restaurant El Gran Cacique",
+      "quantity": 88,
+      "materialType": "Aceite Vegetal Usado (AVU)",
+      "materialState": "Filtrado",
+      "collectorName": "Rafael Díaz",
+      "vehiclePlate": "ABC123"
+    }
+  ],
+  "chartData": [
+    {
+      "date": "01/01/2026",
+      "litersIn": 250.0,
+      "litersOut": 0
+    },
+    {
+      "date": "02/01/2026",
+      "litersIn": 180.5,
+      "litersOut": 500.0
+    }
+  ]
+}
+```
+
+---
+
+## Date Filtering Logic
+
+The dashboard endpoint supports flexible date formats and filtering:
+
+- **Date formats**: Accepts both DD/MM/YYYY and YYYY-MM-DD formats
+- **Range filtering**: Use `dateFrom` and `dateTo` for custom ranges
+- **Month/Year filtering**: Use `month` and `year` for period filtering
+- **Multiple filters**: Can combine date ranges with month/year filters
+
+The API uses PostgreSQL's `EXTRACT()` function for month/year filtering and `TO_DATE()` for parsing dates.
+
+---
+
+## Chart Data Merging
+
+The `chartData` array merges collection (tickets) and dispatch data by date:
+
+1. Query tickets grouped by date → `litersIn`
+2. Query dispatches grouped by date → `litersOut`
+3. Merge into a single array where each date has both `litersIn` and `litersOut` values
+
+This powers the volume trends chart in the dashboard UI.
+
+---
+
+## Error Responses
+
+| Status | Description |
+|--------|-------------|
+| 500 | Database query error |
+
+---
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Dashboard Feature" icon="chart-line" href="/features/dashboard">
+    Learn about the Dashboard UI
+  </Card>
+  
+  <Card title="Tickets API" icon="ticket" href="/api/tickets">
+    Retrieve raw ticket data
+  </Card>
+  
+  <Card title="Dispatches API" icon="box" href="/api/dispatches">
+    Retrieve dispatch data
+  </Card>
+  
+  <Card title="Configuration API" icon="gear" href="/api/configuration">
+    Manage active collection center
+  </Card>
+</CardGroup>

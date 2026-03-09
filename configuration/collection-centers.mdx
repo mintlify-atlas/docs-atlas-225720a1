@@ -1,0 +1,97 @@
+---
+title: Collection Centers
+description: Manage multiple collection centers and understand multi-center data architecture
+---
+
+## Overview
+
+Alternativa Verde supports a multi-center architecture that allows you to manage multiple collection centers within a single application. Each center maintains its own set of generators, tickets, vehicles, and team members, ensuring complete data isolation between locations.
+
+## What are Collection Centers?
+
+Collection centers are physical locations where your organization collects recyclable materials. Each center has:
+
+- **Location details**: Name, state, city, and address
+- **Isolated data**: Generators, tickets, vehicles, and team members specific to that center
+- **Unique ticket series**: Ticket numbers include the center's state code (e.g., `AV-CAR-2024-0001` for Carabobo)
+
+## Multi-Center Architecture
+
+The application uses an "active center" model:
+
+- One center is active at any given time (configured in the Dashboard)
+- The active center determines which data is displayed and used for new tickets
+- Users can switch between centers by changing the active center in the Dashboard
+- Each center maintains complete data isolation
+
+<Note>
+The active center can only be changed from the Dashboard view, not from the Configuration page.
+</Note>
+
+## Creating a Collection Center
+
+<Steps>
+  <Step title="Navigate to Configuration">
+    From the main navigation, select the Configuration option to access center management.
+  </Step>
+  
+  <Step title="Fill in center details">
+    Complete the form with the following information:
+    
+    - **Nombre** (Name): The display name for your collection center (required)
+    - **Estado** (State): The state/province where the center is located
+    - **Ciudad** (City): The city where the center is located
+    - **Dirección** (Address): The full street address of the center
+  </Step>
+  
+  <Step title="Submit the form">
+    Click "Agregar Centro" to create the new collection center. The center will be added to the table below the form.
+  </Step>
+  
+  <Step title="Activate the center">
+    Navigate to the Dashboard and select your new center from the active center dropdown to begin using it.
+  </Step>
+</Steps>
+
+## Editing Collection Centers
+
+To modify an existing collection center:
+
+1. Locate the center in the centers table
+2. Click the edit icon (pencil) in the Actions column
+3. The row will become editable with input fields
+4. Make your changes to any of the fields (name, state, city, or address)
+5. Click "Guardar" to save changes or "Cancelar" to discard
+
+## Deleting Collection Centers
+
+<Warning>
+Deleting a collection center will remove all associated data including generators, tickets, team members, and vehicles. This action cannot be undone.
+</Warning>
+
+To delete a center:
+
+1. Click the delete icon (trash) in the Actions column
+2. Confirm the deletion when prompted
+
+## Center-Specific Data Isolation
+
+Each collection center maintains its own isolated data:
+
+- **Generators**: Clients are assigned to specific centers
+- **Tickets**: All tickets are linked to the center where they were created
+- **Vehicles**: Each center has its own vehicle fleet
+- **Team Members**: Staff members are assigned to specific centers
+- **Ticket Numbering**: Ticket numbers include the center's state code for unique identification
+
+## Next Steps
+
+After creating a collection center:
+
+1. Activate it from the Dashboard
+2. [Add team members](/configuration/team-management) to the center
+3. Begin registering generators and creating tickets
+
+<Card title="Team Management" icon="users" href="/configuration/team-management">
+  Learn how to add and manage team members for your collection center
+</Card>

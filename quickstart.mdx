@@ -1,80 +1,281 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Get operational with Alternativa Verde in minutes - from installation to your first ticket
 ---
 
-## Get started in three steps
-
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+This guide will walk you through the essential steps to get Alternativa Verde up and running, from initial configuration to creating your first material entry ticket.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+Before starting this guide, make sure you have completed the [Installation](/installation) steps.
 </Note>
+
+## Getting Started
+
+<Steps>
+  <Step title="Configure Your Collection Center">
+    When you first open Alternativa Verde, you need to set up your collection center:
+    
+    1. Navigate to the **Configuration** module (Configuración)
+    2. Create a new collection center or select an existing one
+    3. Fill in the collection center details:
+       - **Name**: Your collection center name
+       - **State**: State/province location
+       - **City**: City location
+       - **Address**: Physical address
+       - **Active Status**: Mark as active
+    
+    ```typescript
+    // Collection center data structure
+    {
+      id: string,
+      name: string,
+      state: string,
+      city: string,
+      address: string,
+      isActive: boolean
+    }
+    ```
+    
+    4. **Set as Active Center**: Ensure your collection center is set as the active center in the application configuration
+    
+    <Warning>
+    Only one collection center can be active at a time. All operations will be associated with the active center.
+    </Warning>
+  </Step>
+
+  <Step title="Register Your Team Members">
+    Add the team members who will be handling material collections:
+    
+    1. In the Configuration module, go to **Team Members** (Miembros del Equipo)
+    2. Click **Add Member** and provide:
+       - **Full Name**: Team member's complete name
+       - **Cédula**: National ID number (optional)
+       - **Phone**: Contact phone number
+       - **Role**: Position (e.g., "Collector", "Driver", "Supervisor")
+       - **Active Status**: Mark as active
+    
+    ```typescript
+    // Team member data structure
+    {
+      id: string,
+      centerId: string,
+      fullName: string,
+      cedula: string,
+      phone: string,
+      role: string,
+      isActive: boolean
+    }
+    ```
+    
+    <Tip>
+    Register all team members who will be collecting materials, as they'll be assigned to tickets later.
+    </Tip>
+  </Step>
+
+  <Step title="Add Material Generators (Clients)">
+    Register the generators (clients) who provide materials to your collection center:
+    
+    1. Navigate to the **Generators** module (Generadores)
+    2. Click **Register Generator** and complete:
+       - **Name**: Generator/client name
+       - **RIF**: Tax identification number
+       - **Phone**: Contact number
+       - **Address**: Generator location
+       - **Sector**: Geographic sector or zone
+       - **Collection Mode**: How materials are collected (e.g., "Pickup", "Drop-off")
+    
+    ```typescript
+    // Generator data structure
+    {
+      id: string,
+      name: string,
+      rif: string,
+      phone: string,
+      address: string,
+      sector: string,
+      collectionMode: string,
+      collectionCenterId: string
+    }
+    ```
+    
+    The generator will be automatically associated with your active collection center.
+  </Step>
+
+  <Step title="Register Vehicles (Optional)">
+    If you use vehicles for material collection, register them in the system:
+    
+    1. Go to the **Vehicles** module (Vehículos)
+    2. Click **Add Vehicle** and enter:
+       - **Plate**: Vehicle license plate
+       - **Brand**: Vehicle manufacturer
+       - **Model**: Vehicle model
+       - **Owner**: Vehicle owner name
+       - **Default Vehicle**: Mark if this is your primary vehicle
+    
+    ```typescript
+    // Vehicle data structure
+    {
+      id: string,
+      plate: string,
+      brand: string,
+      model: string,
+      owner: string,
+      isDefault: boolean,
+      collectionCenterId: string
+    }
+    ```
+    
+    <Tip>
+    You can mark one vehicle as the default, which will auto-populate in ticket creation forms.
+    </Tip>
+  </Step>
+
+  <Step title="Create Your First Entry Ticket">
+    Now you're ready to record your first material entry:
+    
+    1. Navigate to the **Tickets** module
+    2. Click **New Ticket** (Nuevo Ticket)
+    3. Fill in the ticket information:
+       - **Date**: Collection date
+       - **Generator**: Select from your registered generators
+       - **Material Type**: Type of material collected (e.g., "Plastic", "Cardboard", "Metal")
+       - **Quantity**: Amount collected (in kg or your unit of measure)
+       - **Material State**: Choose one:
+         - **Filtrado** (Filtered): Sorted and clean material
+         - **Bruto** (Raw): Unsorted material
+         - **Mezcla** (Mixed): Mixed material types
+       - **Collector**: Select the team member who performed the collection
+       - **Vehicle Plate**: Enter or select the vehicle used
+    
+    ```typescript
+    // Ticket data structure
+    {
+      id: string,
+      ticketNumber: string,        // Auto-generated
+      date: string,
+      generatorId: string,
+      generatorName: string,        // Cached for history
+      materialType: string,
+      quantity: number,
+      materialState: "Filtrado" | "Bruto" | "Mezcla",
+      collectionCenterId: string,
+      collectorMemberId: string,
+      collectorName: string,
+      vehiclePlate: string
+    }
+    ```
+    
+    4. Click **Create** to save the ticket
+    
+    <Note>
+    The system automatically generates a unique ticket number for tracking purposes.
+    </Note>
+  </Step>
+
+  <Step title="Review Your Ticket History">
+    After creating tickets, you can:
+    
+    - **View All Tickets**: See complete entry history
+    - **Search Tickets**: Find specific tickets by number or generator
+    - **Filter by Date**: View tickets from specific time periods
+    - **Export Data**: Download ticket data for reporting
+    
+    Navigate to the **History** module (Historial) to review and validate all movements.
+  </Step>
+</Steps>
+
+## What's Next?
+
+### Recording Material Dispatches
+
+When you transfer materials to another location, create a dispatch record:
+
+1. Go to the **Dispatches** module (Salidas)
+2. Click **New Dispatch**
+3. Enter dispatch details:
+   - Date and description
+   - Presentation format (e.g., "Bales", "Bags")
+   - Dispatched quantity
+   - Destination information (name, RIF, address)
+   - Vehicle and driver details
+   - MINEC guide number (if applicable)
+
+```typescript
+// Dispatch data structure
+{
+  id: string,
+  date: string,
+  description: string,
+  presentation: string,
+  dispatchedQuantity: number,
+  destinationName: string,
+  destinationRif: string,
+  destinationAddress: string,
+  vehicleId: string,
+  driverName: string,
+  driverId: string,
+  minecGuideNumber: string,
+  collectionCenterId: string
+}
+```
+
+### Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Regular Updates" icon="clock">
+    Record tickets immediately after material collection to maintain accurate inventory levels
+  </Card>
+  
+  <Card title="Complete Information" icon="list-check">
+    Fill in all relevant fields to ensure comprehensive tracking and reporting
+  </Card>
+  
+  <Card title="Verify Active Center" icon="building">
+    Before creating tickets, always verify that the correct collection center is active
+  </Card>
+  
+  <Card title="Team Training" icon="graduation-cap">
+    Ensure all team members understand the material state classifications and ticket creation process
+  </Card>
+</CardGroup>
+
+### Data Management
+
+<Tip>
+**Export for Reporting**: Use the export functionality to generate reports for management, regulatory compliance, or analysis. Alternativa Verde supports Excel export for easy data manipulation.
+</Tip>
+
+## Common Workflows
+
+### Daily Collection Operations
+
+1. Start your day by verifying the active collection center
+2. As materials arrive, create entry tickets with complete information
+3. Assign the correct collector and vehicle to each ticket
+4. Classify material state accurately (Filtrado, Bruto, or Mezcla)
+5. At end of day, review the ticket history for accuracy
+
+### Multi-Center Management
+
+If you manage multiple collection centers:
+
+1. Switch the active center in Configuration when needed
+2. Each center maintains its own:
+   - Team members
+   - Generators
+   - Vehicles
+   - Ticket and dispatch history
+3. Use the center filter in reports to analyze performance by location
+
+## Need Help?
+
+If you encounter any issues or have questions:
+
+- Review the [Installation](/installation) guide for setup troubleshooting
+- Check that your PostgreSQL database is running and accessible
+- Verify that the active collection center is correctly configured
+- Ensure team members and generators are registered before creating tickets
+
+<Card title="Back to Introduction" icon="book" href="/introduction">
+  Learn more about Alternativa Verde's capabilities and features
+</Card>

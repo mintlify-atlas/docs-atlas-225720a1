@@ -1,0 +1,504 @@
+---
+title: "Tickets API"
+description: "Manage collection tickets for waste oil tracking"
+---
+
+## List Tickets
+
+`GET /api/tickets`
+
+Retrieve a paginated list of tickets with optional filtering and sorting.
+
+### Query Parameters
+
+<ParamField query="collectionCenterId" type="string">
+  Filter tickets by collection center ID. If not provided, uses the active center from configuration.
+</ParamField>
+
+<ParamField query="limit" type="number" default="50">
+  Number of tickets to return per page (max: 200)
+</ParamField>
+
+<ParamField query="offset" type="number" default="0">
+  Number of tickets to skip for pagination
+</ParamField>
+
+<ParamField query="search" type="string">
+  Search term to filter by generator name or ticket number (case-insensitive)
+</ParamField>
+
+<ParamField query="date" type="string">
+  Filter tickets by date (partial match supported)
+</ParamField>
+
+<ParamField query="sortKey" type="string">
+  Field to sort by: `ticketNumber`, `date`, `center`, `generatorName`, `quantity`, or `collectorName`
+</ParamField>
+
+<ParamField query="sortDir" type="string" default="DESC">
+  Sort direction: `ASC` or `DESC`
+</ParamField>
+
+### Response
+
+<ResponseField name="items" type="array">
+  Array of ticket objects
+  <Expandable title="Ticket Object">
+    <ResponseField name="id" type="string">
+      Unique ticket identifier (UUID)
+    </ResponseField>
+    <ResponseField name="ticket_number" type="string">
+      Auto-generated ticket number (format: AV-{STATE}-{YEAR}-{SEQUENCE})
+    </ResponseField>
+    <ResponseField name="date" type="string">
+      Collection date (DD/MM/YYYY or YYYY-MM-DD)
+    </ResponseField>
+    <ResponseField name="generator_id" type="string">
+      ID of the generator (waste oil producer)
+    </ResponseField>
+    <ResponseField name="generator_name" type="string">
+      Cached name of the generator
+    </ResponseField>
+    <ResponseField name="material_type" type="string">
+      Type of material collected
+    </ResponseField>
+    <ResponseField name="quantity" type="number">
+      Quantity collected (in liters)
+    </ResponseField>
+    <ResponseField name="material_state" type="string">
+      State of material: "Filtrado", "Bruto", or "Mezcla"
+    </ResponseField>
+    <ResponseField name="collection_center_id" type="string | null">
+      Associated collection center ID
+    </ResponseField>
+    <ResponseField name="collector_member_id" type="string | null">
+      ID of the collection center member who collected
+    </ResponseField>
+    <ResponseField name="collector_name" type="string">
+      Name of the collector
+    </ResponseField>
+    <ResponseField name="vehicle_plate" type="string">
+      License plate of collection vehicle
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      Timestamp when ticket was created
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Total count of tickets matching the filters
+</ResponseField>
+
+### Example Request
+
+```bash
+curl "http://localhost:4000/api/tickets?limit=10&offset=0&search=Restaurant&sortKey=date&sortDir=DESC"
+```
+
+### Example Response
+
+```json
+{
+  "items": [
+    {
+      "id": "ticket-123",
+      "ticket_number": "AV-ARA-2026-0001",
+      "date": "09/03/2026",
+      "generator_id": "gen-456",
+      "generator_name": "Restaurant El Sabor",
+      "material_type": "Aceite Vegetal Usado",
+      "quantity": 45.5,
+      "material_state": "Filtrado",
+      "collection_center_id": "center-1",
+      "collector_member_id": "member-1",
+      "collector_name": "Juan Pérez",
+      "vehicle_plate": "ABC-123",
+      "created_at": "2026-03-09T10:30:00Z"
+    }
+  ],
+  "total": 1
+}
+```
+
+---
+
+## Get Ticket Count
+
+`GET /api/tickets/count`
+
+Retrieve the total count of tickets.
+
+### Query Parameters
+
+<ParamField query="collectionCenterId" type="string">
+  Filter count by collection center ID. If not provided, uses the active center from configuration.
+</ParamField>
+
+### Response
+
+<ResponseField name="total" type="number">
+  Total number of tickets
+</ResponseField>
+
+### Example Request
+
+```bash
+curl "http://localhost:4000/api/tickets/count?collectionCenterId=center-1"
+```
+
+### Example Response
+
+```json
+{
+  "total": 42
+}
+```
+
+---
+
+## Preview Next Ticket Number
+
+`GET /api/tickets/preview-number`
+
+Preview the next ticket number that will be generated without creating a ticket. Useful for displaying to users before they save.
+
+### Query Parameters
+
+<ParamField query="collectionCenterId" type="string">
+  Collection center ID. If not provided, uses the active center from configuration.
+</ParamField>
+
+<ParamField query="date" type="string" required>
+  Ticket date (DD/MM/YYYY or YYYY-MM-DD) - used to determine year in ticket number
+</ParamField>
+
+### Response
+
+<ResponseField name="expectedTicketNumber" type="string">
+  The next ticket number that will be generated (format: AV-{STATE}-{YEAR}-{SEQUENCE})
+</ResponseField>
+
+### Example Request
+
+```bash
+curl "http://localhost:4000/api/tickets/preview-number?date=09/03/2026&collectionCenterId=center-1"
+```
+
+### Example Response
+
+```json
+{
+  "expectedTicketNumber": "AV-ARA-2026-0042"
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "No hay centro de acopio activo configurado"
+}
+```
+
+---
+
+## Get Ticket by ID
+
+`GET /api/tickets/:id`
+
+Retrieve a single ticket by its ID.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Ticket ID
+</ParamField>
+
+### Response
+
+Returns a single ticket object (see List Tickets for structure) or `null` if not found.
+
+### Example Request
+
+```bash
+curl http://localhost:4000/api/tickets/ticket-123
+```
+
+---
+
+## Create Ticket
+
+`POST /api/tickets`
+
+Create a new collection ticket. The ticket number is automatically generated based on the collection center's state and the ticket date.
+
+### Request Body
+
+<ParamField body="id" type="string" required>
+  Unique ticket identifier (UUID)
+</ParamField>
+
+<ParamField body="date" type="string" required>
+  Collection date (DD/MM/YYYY or YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="generatorId" type="string" required>
+  ID of the generator (waste oil producer)
+</ParamField>
+
+<ParamField body="generatorName" type="string" required>
+  Name of the generator (cached for historical records)
+</ParamField>
+
+<ParamField body="materialType" type="string" required>
+  Type of material collected
+</ParamField>
+
+<ParamField body="quantity" type="number" required>
+  Quantity collected in liters
+</ParamField>
+
+<ParamField body="materialState" type="string" required>
+  State of material: "Filtrado", "Bruto", or "Mezcla"
+</ParamField>
+
+<ParamField body="collectorName" type="string" required>
+  Name of the person who collected
+</ParamField>
+
+<ParamField body="vehiclePlate" type="string" required>
+  License plate of collection vehicle
+</ParamField>
+
+<ParamField body="collectionCenterId" type="string">
+  Collection center ID. If not provided, uses the active center from configuration.
+</ParamField>
+
+<ParamField body="collectorMemberId" type="string">
+  ID of the collection center member who collected
+</ParamField>
+
+### Response
+
+Returns the created ticket object with the auto-generated `ticket_number` and `created_at` fields.
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:4000/api/tickets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "ticket-new-123",
+    "date": "09/03/2026",
+    "generatorId": "gen-456",
+    "generatorName": "Restaurant El Sabor",
+    "materialType": "Aceite Vegetal Usado",
+    "quantity": 45.5,
+    "materialState": "Filtrado",
+    "collectorName": "Juan Pérez",
+    "vehiclePlate": "ABC-123",
+    "collectionCenterId": "center-1",
+    "collectorMemberId": "member-1"
+  }'
+```
+
+### Error Responses
+
+```json
+{
+  "error": "No hay centro de acopio activo configurado"
+}
+```
+
+```json
+{
+  "error": "DB insert error"
+}
+```
+
+---
+
+## Update Ticket
+
+`PUT /api/tickets/:id`
+
+Update an existing ticket. Unlike creation, this allows manual editing of the ticket number.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Ticket ID
+</ParamField>
+
+### Request Body
+
+<ParamField body="ticketNumber" type="string" required>
+  Ticket number (can be manually edited)
+</ParamField>
+
+<ParamField body="date" type="string" required>
+  Collection date
+</ParamField>
+
+<ParamField body="generatorId" type="string" required>
+  Generator ID
+</ParamField>
+
+<ParamField body="generatorName" type="string" required>
+  Generator name
+</ParamField>
+
+<ParamField body="materialType" type="string" required>
+  Material type
+</ParamField>
+
+<ParamField body="quantity" type="number" required>
+  Quantity in liters
+</ParamField>
+
+<ParamField body="materialState" type="string" required>
+  Material state
+</ParamField>
+
+<ParamField body="collectorName" type="string" required>
+  Collector name
+</ParamField>
+
+<ParamField body="vehiclePlate" type="string" required>
+  Vehicle plate
+</ParamField>
+
+<ParamField body="collectionCenterId" type="string">
+  Collection center ID
+</ParamField>
+
+<ParamField body="collectorMemberId" type="string">
+  Collector member ID
+</ParamField>
+
+### Response
+
+Returns the updated ticket object.
+
+### Example Request
+
+```bash
+curl -X PUT http://localhost:4000/api/tickets/ticket-123 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ticketNumber": "AV-ARA-2026-0001",
+    "date": "09/03/2026",
+    "generatorId": "gen-456",
+    "generatorName": "Restaurant El Sabor",
+    "materialType": "Aceite Vegetal Usado",
+    "quantity": 50.0,
+    "materialState": "Filtrado",
+    "collectorName": "Juan Pérez",
+    "vehiclePlate": "ABC-123",
+    "collectionCenterId": "center-1"
+  }'
+```
+
+---
+
+## Delete Ticket
+
+`DELETE /api/tickets/:id`
+
+Delete a ticket by its ID.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Ticket ID
+</ParamField>
+
+### Response
+
+<ResponseField name="ok" type="boolean">
+  Returns `true` if deletion was successful
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X DELETE http://localhost:4000/api/tickets/ticket-123
+```
+
+### Example Response
+
+```json
+{
+  "ok": true
+}
+```
+
+---
+
+## Get Tickets Report
+
+`GET /api/tickets/report`
+
+Retrieve all tickets matching the given filters, sorted by date ascending. Designed for generating reports.
+
+### Query Parameters
+
+<ParamField query="collectionCenterId" type="string">
+  Filter by collection center ID
+</ParamField>
+
+<ParamField query="dateFrom" type="string">
+  Start date filter (DD/MM/YYYY format)
+</ParamField>
+
+<ParamField query="dateTo" type="string">
+  End date filter (DD/MM/YYYY format)
+</ParamField>
+
+<ParamField query="month" type="number">
+  Filter by month (1-12)
+</ParamField>
+
+<ParamField query="year" type="number">
+  Filter by year
+</ParamField>
+
+<ParamField query="generatorId" type="string">
+  Filter by single generator ID
+</ParamField>
+
+<ParamField query="generatorIds" type="string">
+  Filter by multiple generator IDs (comma-separated)
+</ParamField>
+
+### Response
+
+Returns an array of ticket objects sorted by date ascending.
+
+### Example Request
+
+```bash
+curl "http://localhost:4000/api/tickets/report?dateFrom=01/01/2026&dateTo=31/03/2026&collectionCenterId=center-1"
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": "ticket-1",
+    "ticket_number": "AV-ARA-2026-0001",
+    "date": "01/01/2026",
+    "quantity": 30.5,
+    ...
+  },
+  {
+    "id": "ticket-2",
+    "ticket_number": "AV-ARA-2026-0002",
+    "date": "05/01/2026",
+    "quantity": 42.0,
+    ...
+  }
+]
+```

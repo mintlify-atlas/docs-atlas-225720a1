@@ -1,0 +1,427 @@
+---
+title: History and Reporting
+description: Search, view, export, and generate compliance reports from your complete collection history
+---
+
+The History module provides comprehensive access to all collection tickets ever created, with powerful search, filtering, export, and official reporting capabilities.
+
+## Overview
+
+History serves as the central repository for:
+
+- **Ticket Archive**: Complete searchable database of all collection tickets
+- **Excel Export**: Download filtered ticket data for external analysis
+- **Book of Control**: Generate official monthly compliance documents
+- **Compliance Reporting**: Produce government-required documentation
+- **Data Analysis**: Search, sort, and filter to identify trends and patterns
+
+## History View Features
+
+<CardGroup cols={2}>
+  <Card title="Search & Filter" icon="magnifying-glass">
+    - Full-text search
+    - Date filtering
+    - Generator filtering
+  </Card>
+  <Card title="Export Options" icon="file-arrow-down">
+    - Excel export
+    - Book of Control PDF
+    - Filtered data exports
+  </Card>
+  <Card title="Ticket Actions" icon="list">
+    - View details
+    - Reprint tickets
+    - Edit existing tickets
+    - Delete tickets
+  </Card>
+  <Card title="Sorting" icon="arrow-up-arrow-down">
+    - Sort by any column
+    - Ascending/descending
+    - Multi-criteria sorting
+  </Card>
+</CardGroup>
+
+## Searching Tickets
+
+The search bar supports multiple search types:
+
+### Search by Generator Name
+```
+Restaurant El Gran Cacique
+```
+Returns all tickets for that generator (case-insensitive, partial matches)
+
+### Search by Ticket Number
+```
+AV-ARAGUA-2026-0042
+```
+Quickly locate a specific ticket
+
+### Search Tips
+- Search is case-insensitive
+- Partial matches work ("Gran" finds "Restaurant El Gran Cacique")
+- 300ms debounce delay prevents excessive searches while typing
+- Clears automatically when you empty the search box
+
+<Tip>
+Use the ticket number search when you have a physical ticket and need to view or edit it in the system.
+</Tip>
+
+## Filtering by Date
+
+### Date Format
+Enter dates as `DD/MM/YYYY` in the filter box:
+
+```
+15/01/2026
+```
+
+Filters to tickets created on that exact date.
+
+<Note>
+The date filter searches for exact matches. For date ranges, use the Excel export feature and filter the spreadsheet.
+</Note>
+
+## History Table Columns
+
+| Column | Description | Actions |
+|--------|-------------|--------|
+| **Nro. Ticket** | Unique ticket number | Click to sort |
+| **Fecha** | Collection date (DD/MM/YYYY) | Click to sort |
+| **Centro de Acopio** | Collection center name | Click to sort |
+| **Generador** | Generator/client name | Click to sort |
+| **Cantidad** | Volume in liters (badge) | Click to sort |
+| **Recolector** | Collector staff name | Click to sort |
+| **Acciones** | Print, View, Edit, Delete | - |
+
+## Ticket Actions
+
+Each ticket row provides four action buttons:
+
+### 🖨️ Print
+- Opens print preview of the official ticket
+- Includes all details: generator, quantity, signatures
+- Ready for physical signature collection
+
+### 👁️ View Detail
+- Display-only view of complete ticket information
+- Shows all fields without edit capabilities
+- Same view as print preview
+
+### ✏️ Edit
+- Navigate to ticket editor
+- Modify any field except ticket number
+- Changes take effect immediately
+- Original ticket number is preserved
+
+### ❌ Delete
+- Permanently remove ticket from system
+- Confirmation dialog prevents accidental deletion
+- **Irreversible** - no undo or recovery
+- Updates dashboard statistics automatically
+
+<Warning>
+Deleting a ticket removes it from:
+- History view
+- Dashboard statistics
+- Excel exports
+- Book of Control reports
+- All analytics and charts
+
+This action cannot be undone.
+</Warning>
+
+## Sorting Tickets
+
+### How to Sort
+1. Click any column header
+2. Column sorts in ascending order (A→Z, oldest→newest)
+3. Click again to reverse to descending order
+4. Click "Limpiar orden" (Clear order) to reset
+
+### Sort Indicators
+- ⬆️ **ChevronUp**: Currently sorted ascending
+- ⬇️ **ChevronDown**: Currently sorted descending
+- ↕️ **ArrowUpDown**: Column is sortable (not active)
+
+### Useful Sorts
+
+**By Date** (oldest first)
+- See historical progression
+- Identify gaps in collection schedule
+
+**By Date** (newest first)
+- Review recent collections
+- Quality check latest entries
+
+**By Generator** (A→Z)
+- Group all tickets per client
+- Analyze client collection patterns
+
+**By Quantity** (highest first)
+- Identify largest collections
+- Spot unusual volume patterns
+
+**By Centro de Acopio**
+- Group tickets by operational region
+- Regional performance analysis
+
+## Excel Export
+
+Export filtered ticket data to Excel for external analysis:
+
+<Steps>
+  <Step title="Apply Filters">
+    Use search and date filters to narrow down tickets (optional - can export all)
+  </Step>
+  
+  <Step title="Apply Sorting">
+    Sort by desired column to control export order (optional)
+  </Step>
+  
+  <Step title="Click Export Button">
+    Click "Exportar Excel" in top-right corner
+  </Step>
+  
+  <Step title="Wait for Generation">
+    Button shows "Exportando..." while processing large datasets
+  </Step>
+  
+  <Step title="Download File">
+    Browser downloads file as `historial_tickets_YYYY-MM-DD.xlsx`
+  </Step>
+</Steps>
+
+### Excel File Contents
+
+The exported spreadsheet contains:
+
+| Column | Data |
+|--------|------|
+| Nro Ticket | Ticket number |
+| Fecha | Collection date |
+| Centro de Acopio | Collection center name |
+| Generador | Generator/client name |
+| Cantidad (Lts) | Volume in liters |
+| Recolector | Collector name |
+| Placa | Vehicle plate |
+| Estado Material | Material state (Filtrado/Bruto/Mezcla) |
+
+<Tip>
+Excel exports include ALL tickets matching your filters, not just the current page. This makes it perfect for monthly reporting and financial analysis.
+</Tip>
+
+## Book of Control (Libro de Control)
+
+Generate official compliance reports required by environmental authorities:
+
+### What is the Book of Control?
+
+An official document required by Venezuelan Ministry of Environment (MINEC) that includes:
+
+- **FOLIO 00**: Cover page with company and center information
+- **FOLIO 01**: Regional operations identification (staff, vehicles)
+- **FOLIO 02**: Entry log (collections from generators)
+- **FOLIO 03**: Exit log (dispatches to buyers)
+- **FOLIO 04**: Technical specifications and monthly closure
+- **FOLIO 05**: Volume diagnostics by collection center
+
+### Generating the Book
+
+<Steps>
+  <Step title="Select Month and Year">
+    Use the dropdown selectors in the filter bar:
+    - **Mes**: Choose month (Enero through Diciembre)
+    - **Año**: Choose year (6-year range)
+  </Step>
+  
+  <Step title="Click Generate">
+    Click "Libro de Control" button (green, with printer icon)
+  </Step>
+  
+  <Step title="Wait for Processing">
+    System compiles:
+    - All tickets for the selected month
+    - All dispatches for the selected month  
+    - Collection center information
+    - Staff and vehicle details
+    - Volume calculations
+  </Step>
+  
+  <Step title="Review in New Window">
+    Document opens in new browser window with:
+    - Multi-page formatted report
+    - Company logo on each page
+    - Professional layout for printing
+  </Step>
+  
+  <Step title="Print or Save as PDF">
+    Use browser print function:
+    - Print → Save as PDF for digital copy
+    - Print → Physical printer for paper copy
+  </Step>
+</Steps>
+
+### Book of Control Contents
+
+#### FOLIO 00: Cover Page
+- Report title
+- Company name and RIF
+- Collection center name and address
+- ReNMA registration number
+- Month and year of report
+
+#### FOLIO 01: Regional Operations
+- Operations manager name and ID
+- Authorized transport vehicle details
+- Contact information
+
+#### FOLIO 02: Entry Log (Recolección)
+- Table of all collection tickets for the month:
+  - Ticket number
+  - Date
+  - Generator name and sector
+  - Quantity in liters
+  - Collector name
+- **Total liters collected** for the month
+
+#### FOLIO 03: Exit Log (Despacho)
+- Table of all dispatches for the month:
+  - Date
+  - Description
+  - Presentation
+  - Quantity in liters
+  - Destination company
+  - Vehicle plate
+  - Driver name
+- **Total liters dispatched** for the month
+
+#### FOLIO 04: Technical Specifications
+- Monthly volume consolidation
+- Material properties (reference to laboratory report):
+  - Humidity: 0.180%
+  - Acidity: 4.28
+  - Peroxide index: 3.18 meq/kg
+- NFPA 704 classification
+- Validation signature block
+
+#### FOLIO 05: Volume Diagnostics
+- Total tickets loaded in system
+- Tickets included in this month's report
+- Breakdown by collection center:
+  - Center name
+  - Number of tickets
+  - Total liters
+
+<Note>
+The Book of Control aggregates data across ALL collection centers. It's not filtered by the active center in the dashboard.
+</Note>
+
+### When to Generate the Book
+
+- **Monthly**: Generate at the end of each month for compliance
+- **Quarterly**: For quarterly environmental reports
+- **Annually**: Year-end compliance summary
+- **On-Demand**: When requested by environmental auditors
+- **Before Inspections**: Have current month ready for regulators
+
+<Warning>
+The Book of Control pulls data from tickets and dispatches. Ensure all tickets are entered and accurate BEFORE generating monthly reports.
+</Warning>
+
+## Pagination
+
+History displays 50 tickets per page:
+
+- **Showing X-Y of Z**: Current visible range and total count
+- **Anterior** (Previous): Go to previous page
+- **Siguiente** (Next): Go to next page  
+- **Page N of M**: Current page and total pages
+
+Pagination controls are disabled when:
+- On first page (Anterior disabled)
+- On last page (Siguiente disabled)
+- Loading data (both disabled)
+
+<Tip>
+Use filters to reduce the total number of results and find tickets faster than paging through hundreds of records.
+</Tip>
+
+## Performance Considerations
+
+### Large Datasets
+- History loads 50 tickets at a time (paginated)
+- Excel export batches 200 tickets at a time internally
+- Book of Control loads ALL tickets (may take time for years of data)
+
+### Search Debouncing
+- 300ms delay before search executes
+- Prevents search while you're still typing
+- Reduces server load
+
+### Caching
+- Repeat page loads use cache
+- Sorting triggers cache refresh
+- Ensures data accuracy
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Export monthly backups">
+    Generate Excel exports at the end of each month as a data backup. Store in cloud storage or external drives.
+  </Accordion>
+  
+  <Accordion title="Generate Book of Control immediately after month-end">
+    Create the Book of Control on the 1st-3rd of the following month while data is fresh and corrections are easy.
+  </Accordion>
+  
+  <Accordion title="Use specific searches instead of paging">
+    Rather than clicking through 20 pages, use the search bar to jump directly to the generator or ticket you need.
+  </Accordion>
+  
+  <Accordion title="Sort before exporting">
+    Apply your desired sort order before exporting to Excel to get the data organized the way you need it.
+  </Accordion>
+  
+  <Accordion title="Verify data before audits">
+    A week before scheduled environmental audits, generate the Book of Control and review for completeness and accuracy.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### "No se encontraron tickets"
+No tickets match your search/filter criteria:
+- ✅ Clear filters and search to see all tickets
+- ✅ Check date format (DD/MM/YYYY)
+- ✅ Verify spelling in generator name search
+
+### Excel Export Stuck on "Exportando..."
+- ⏳ Large datasets take time (1000+ tickets may take 10-30 seconds)
+- ⏳ Don't close the browser window while exporting
+- 🔄 If timeout occurs, try filtering to smaller date range
+
+### Book of Control Empty Pages
+- ✅ Ensure you selected a month with actual ticket data
+- ✅ Check that tickets have valid dates in that month
+- ✅ Verify collection center is configured correctly
+
+## Data Retention
+
+Ticket history is:
+- ✅ Retained indefinitely
+- ✅ Never auto-deleted
+- ✅ Included in database backups
+- ⚠️ Only removed via manual deletion (with confirmation)
+
+<Warning>
+Alternativa Verde 2023 is required to retain collection records for 5 years per environmental regulations. Never delete tickets less than 5 years old unless legally authorized.
+</Warning>
+
+## Related Features
+
+- [Dashboard](/features/dashboard) - Real-time overview of collection operations
+- [Ticket Management](/features/tickets) - Create and edit collection tickets
+- [Dispatch Management](/features/dispatches) - Record outbound shipments (affects Book of Control)
+- [Generator Management](/features/generators) - Client information for ticket filtering
+- [Tickets API](/api/tickets) - Programmatic access to history data

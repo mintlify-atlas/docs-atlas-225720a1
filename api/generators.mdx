@@ -1,0 +1,314 @@
+---
+title: "Generators API"
+description: "Manage waste oil generators (producers/clients)"
+---
+
+## List Generators
+
+`GET /api/generators`
+
+Retrieve all generators, optionally filtered by collection center.
+
+### Query Parameters
+
+<ParamField query="collectionCenterId" type="string">
+  Filter generators by collection center ID. If not provided, uses the active center from configuration.
+</ParamField>
+
+### Response
+
+Returns an array of generator objects sorted by name.
+
+<Expandable title="Generator Object">
+  <ResponseField name="id" type="string">
+    Unique generator identifier
+  </ResponseField>
+  <ResponseField name="name" type="string">
+    Generator name (business name)
+  </ResponseField>
+  <ResponseField name="rif" type="string">
+    Tax identification number (RIF)
+  </ResponseField>
+  <ResponseField name="phone" type="string">
+    Contact phone number
+  </ResponseField>
+  <ResponseField name="address" type="string">
+    Physical address
+  </ResponseField>
+  <ResponseField name="sector" type="string">
+    Sector or neighborhood
+  </ResponseField>
+  <ResponseField name="collection_mode" type="string | null">
+    Collection mode (e.g., "Puerta a Puerta", "Centro de Acopio")
+  </ResponseField>
+  <ResponseField name="collection_center_id" type="string | null">
+    Associated collection center ID
+  </ResponseField>
+  <ResponseField name="created_at" type="string">
+    Timestamp when generator was created
+  </ResponseField>
+</Expandable>
+
+### Example Request
+
+```bash
+curl http://localhost:4000/api/generators?collectionCenterId=center-1
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": "gen-1",
+    "name": "Restaurant El Sabor",
+    "rif": "J-12345678-9",
+    "phone": "+58 414 1234567",
+    "address": "Av. Principal, Local 5",
+    "sector": "Centro",
+    "collection_mode": "Puerta a Puerta",
+    "collection_center_id": "center-1",
+    "created_at": "2026-01-15T10:00:00Z"
+  },
+  {
+    "id": "gen-2",
+    "name": "Taller Mecánico Los Tres",
+    "rif": "J-98765432-1",
+    "phone": "+58 424 9876543",
+    "address": "Calle 5, Galpón 3",
+    "sector": "Industrial",
+    "collection_mode": "Centro de Acopio",
+    "collection_center_id": "center-1",
+    "created_at": "2026-02-01T14:30:00Z"
+  }
+]
+```
+
+---
+
+## Get Generator by ID
+
+`GET /api/generators/:id`
+
+Retrieve a single generator by its ID.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Generator ID
+</ParamField>
+
+### Response
+
+Returns a single generator object or `null` if not found.
+
+### Example Request
+
+```bash
+curl http://localhost:4000/api/generators/gen-1
+```
+
+### Example Response
+
+```json
+{
+  "id": "gen-1",
+  "name": "Restaurant El Sabor",
+  "rif": "J-12345678-9",
+  "phone": "+58 414 1234567",
+  "address": "Av. Principal, Local 5",
+  "sector": "Centro",
+  "collection_mode": "Puerta a Puerta",
+  "collection_center_id": "center-1",
+  "created_at": "2026-01-15T10:00:00Z"
+}
+```
+
+---
+
+## Create Generator
+
+`POST /api/generators`
+
+Create a new waste oil generator.
+
+### Request Body
+
+<ParamField body="id" type="string" required>
+  Unique generator identifier (UUID)
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  Generator name (business name)
+</ParamField>
+
+<ParamField body="rif" type="string" required>
+  Tax identification number (RIF)
+</ParamField>
+
+<ParamField body="phone" type="string" required>
+  Contact phone number
+</ParamField>
+
+<ParamField body="address" type="string" required>
+  Physical address
+</ParamField>
+
+<ParamField body="sector" type="string" required>
+  Sector or neighborhood
+</ParamField>
+
+<ParamField body="collectionMode" type="string">
+  Collection mode (optional)
+</ParamField>
+
+<ParamField body="collectionCenterId" type="string">
+  Associated collection center ID (optional)
+</ParamField>
+
+### Response
+
+Returns the created generator object with `created_at` timestamp.
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:4000/api/generators \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "gen-new-1",
+    "name": "Panadería La Espiga",
+    "rif": "J-55555555-5",
+    "phone": "+58 412 5555555",
+    "address": "Calle 10, Edificio A",
+    "sector": "Norte",
+    "collectionMode": "Puerta a Puerta",
+    "collectionCenterId": "center-1"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "id": "gen-new-1",
+  "name": "Panadería La Espiga",
+  "rif": "J-55555555-5",
+  "phone": "+58 412 5555555",
+  "address": "Calle 10, Edificio A",
+  "sector": "Norte",
+  "collection_mode": "Puerta a Puerta",
+  "collection_center_id": "center-1",
+  "created_at": "2026-03-09T15:30:00Z"
+}
+```
+
+---
+
+## Update Generator
+
+`PUT /api/generators/:id`
+
+Update an existing generator.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Generator ID
+</ParamField>
+
+### Request Body
+
+<ParamField body="name" type="string" required>
+  Generator name
+</ParamField>
+
+<ParamField body="rif" type="string" required>
+  Tax identification number (RIF)
+</ParamField>
+
+<ParamField body="phone" type="string" required>
+  Contact phone number
+</ParamField>
+
+<ParamField body="address" type="string" required>
+  Physical address
+</ParamField>
+
+<ParamField body="sector" type="string" required>
+  Sector or neighborhood
+</ParamField>
+
+<ParamField body="collectionMode" type="string">
+  Collection mode
+</ParamField>
+
+<ParamField body="collectionCenterId" type="string">
+  Associated collection center ID
+</ParamField>
+
+### Response
+
+Returns the updated generator object.
+
+### Example Request
+
+```bash
+curl -X PUT http://localhost:4000/api/generators/gen-1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Restaurant El Sabor (Nueva Sede)",
+    "rif": "J-12345678-9",
+    "phone": "+58 414 1234567",
+    "address": "Av. Bolívar, Local 12",
+    "sector": "Centro",
+    "collectionMode": "Puerta a Puerta",
+    "collectionCenterId": "center-1"
+  }'
+```
+
+---
+
+## Delete Generator
+
+`DELETE /api/generators/:id`
+
+Delete a generator by its ID.
+
+<Warning>
+  Deleting a generator will cascade delete all associated tickets due to the foreign key constraint.
+</Warning>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Generator ID
+</ParamField>
+
+### Response
+
+<ResponseField name="ok" type="boolean">
+  Returns `true` if deletion was successful
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X DELETE http://localhost:4000/api/generators/gen-1
+```
+
+### Example Response
+
+```json
+{
+  "ok": true
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "DB delete error"
+}
+```

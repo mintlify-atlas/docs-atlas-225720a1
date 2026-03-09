@@ -1,0 +1,225 @@
+---
+title: Authentication
+description: Security and authentication for the Alternativa Verde API
+---
+
+## Current Authentication Status
+
+<Warning>
+  The API currently does **not implement authentication or authorization**. All endpoints are publicly accessible without credentials.
+</Warning>
+
+Based on the source code analysis (server/index.js:1-913), there is:
+
+- No authentication middleware
+- No API key validation
+- No JWT token verification
+- No user session management
+- No authorization checks
+
+This means any client can:
+- Read all data from any endpoint
+- Create, update, or delete any resource
+- Access data from all collection centers
+
+## CORS Configuration
+
+The API has CORS enabled for all origins:
+
+```javascript
+app.use(cors());
+```
+
+This allows requests from any domain, which is suitable for development but should be restricted in production.
+
+## Security Considerations
+
+### For Development
+
+The current open API is acceptable for:
+- Local development environments
+- Internal networks behind a firewall
+- Trusted environments with no external access
+
+### For Production
+
+<Warning>
+  **Do not deploy this API to production without adding authentication.**
+  
+  Without authentication, your data is vulnerable to:
+  - Unauthorized access and data theft
+  - Data manipulation or deletion
+  - Spam or abuse
+</Warning>
+
+## Recommended Security Measures
+
+Before deploying to production, implement these security measures:
+
+### 1. Add Authentication Middleware
+
+Implement one of these authentication strategies:
+
+**Option A: API Key Authentication**
+```javascript
+const authenticateApiKey = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  if (!apiKey || apiKey !== process.env.API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+};
+
+app.use('/api/*', authenticateApiKey);
+```
+
+**Option B: JWT Token Authentication**
+```javascript
+import jwt from 'jsonwebtoken';
+
+const authenticateJWT = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+app.use('/api/*', authenticateJWT);
+```
+
+### 2. Restrict CORS Origins
+
+Limit CORS to specific domains:
+
+```javascript
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || 'http://localhost:3000',
+  credentials: true
+}));
+```
+
+### 3. Add Rate Limiting
+
+Protect against abuse with rate limiting:
+
+```javascript
+import rateLimit from 'express-rate-limit';
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+
+app.use('/api/', limiter);
+```
+
+### 4. Implement Authorization
+
+Add role-based access control to restrict operations:
+
+```javascript
+const requireRole = (role) => (req, res, next) => {
+  if (!req.user || req.user.role !== role) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+};
+
+// Example: Only admins can delete
+app.delete('/api/tickets/:id', requireRole('admin'), async (req, res) => {
+  // ... delete logic
+});
+```
+
+### 5. Use HTTPS
+
+Always use HTTPS in production to encrypt data in transit:
+
+- Deploy behind a reverse proxy (nginx, Apache)
+- Use Let's Encrypt for free SSL certificates
+- Redirect HTTP to HTTPS
+
+### 6. Validate Input
+
+Add input validation to prevent injection attacks:
+
+```javascript
+import { body, validationResult } from 'express-validator';
+
+app.post('/api/generators',
+  body('name').trim().notEmpty(),
+  body('rif').trim().optional(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    // ... create logic
+  }
+);
+```
+
+### 7. Secure Database Credentials
+
+Ensure database credentials are stored securely:
+
+- Use environment variables (`.env` file)
+- Never commit credentials to version control
+- Use strong passwords
+- Limit database user permissions
+
+## Environment Variables for Security
+
+Add these to your `.env` file:
+
+```bash
+# API Security
+API_KEY=your-secret-api-key-here
+JWT_SECRET=your-jwt-secret-here
+ALLOWED_ORIGINS=https://yourapp.com,https://admin.yourapp.com
+
+# Database (already configured)
+PGHOST=127.0.0.1
+PGPORT=5432
+PGUSER=postgres
+PGPASSWORD=your-secure-password
+PGDATABASE=tickets
+
+# Server
+PORT=4000
+NODE_ENV=production
+```
+
+## Database Security
+
+The current implementation uses parameterized queries (server/index.js:116-892), which provides protection against SQL injection:
+
+```javascript
+// Good - uses parameterized queries
+const result = await pool.query(
+  'SELECT * FROM generators WHERE id = $1',
+  [id]
+);
+```
+
+Continue using this pattern for all database queries.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Overview" icon="book" href="/api/overview">
+    Learn about the API architecture and endpoints
+  </Card>
+  
+  <Card title="Express.js Security" icon="shield" href="https://expressjs.com/en/advanced/best-practice-security.html">
+    Express.js security best practices
+  </Card>
+</CardGroup>

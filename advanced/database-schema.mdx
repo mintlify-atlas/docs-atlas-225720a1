@@ -1,0 +1,445 @@
+---
+title: Database Schema
+description: Complete PostgreSQL database schema reference for Alternativa Verde
+---
+
+## Overview
+
+Alternativa Verde uses PostgreSQL as its database system with a normalized relational schema. The database tracks collection centers, their members, generators (clients), vehicles, collection tickets, and material dispatches.
+
+### Extensions
+
+The schema uses the following PostgreSQL extensions:
+
+- **pg_trgm**: Enables trigram-based similarity searches for efficient ILIKE queries on text fields
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+```
+
+## Tables
+
+<Accordion title="collection_centers - Collection Center Information">
+
+Stores information about each collection center location.
+
+### Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS collection_centers (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  state TEXT,
+  city TEXT,
+  address TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### Fields
+
+- **id**: Unique identifier (format: `cc_[timestamp]`)
+- **name**: Center name (e.g., "Centro de Acopio Puerto Ordaz")
+- **state**: State/province where center is located
+- **city**: City location
+- **address**: Full address
+- **is_active**: Whether center is currently operational
+- **created_at**: Record creation timestamp
+
+### Indexes
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_collection_centers_name 
+  ON collection_centers(name);
+```
+
+</Accordion>
+
+<Accordion title="collection_center_members - Center Staff">
+
+Stores team members working at each collection center.
+
+### Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS collection_center_members (
+  id TEXT PRIMARY KEY,
+  center_id TEXT NOT NULL REFERENCES collection_centers(id) ON DELETE CASCADE,
+  full_name TEXT NOT NULL,
+  cedula TEXT,
+  phone TEXT,
+  role TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### Fields
+
+- **id**: Unique identifier (format: `ccm_[timestamp]`)
+- **center_id**: Foreign key to collection_centers
+- **full_name**: Member's full name
+- **cedula**: National ID number
+- **phone**: Contact phone number
+- **role**: Job role (e.g., "Recolector", "Jefe de Operaciones")
+- **is_active**: Whether member is currently active
+- **created_at**: Record creation timestamp
+
+### Relationships
+
+- **Belongs to**: collection_centers (CASCADE delete)
+- **Referenced by**: tickets.collector_member_id
+
+### Indexes
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_collection_center_members_center_id 
+  ON collection_center_members(center_id);
+```
+
+</Accordion>
+
+<Accordion title="app_configuration - Global Settings">
+
+Single-row configuration table for global application settings.
+
+### Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS app_configuration (
+  id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  collection_center_id TEXT REFERENCES collection_centers(id) ON DELETE SET NULL,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### Fields
+
+- **id**: Always 1 (enforced by CHECK constraint)
+- **collection_center_id**: Currently active collection center
+- **updated_at**: Last update timestamp
+
+### Design Note
+
+This table is constrained to a single row (`CHECK (id = 1)`) to ensure only one active configuration exists. The initial row is inserted automatically:
+
+```sql
+INSERT INTO app_configuration (id, collection_center_id, updated_at)
+VALUES (1, NULL, now())
+ON CONFLICT (id) DO NOTHING;
+```
+
+</Accordion>
+
+<Accordion title="generators - Client Information">
+
+Stores information about generators (clients who provide used oil).
+
+### Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS generators (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  rif TEXT,
+  phone TEXT,
+  address TEXT,
+  sector TEXT,
+  collection_mode TEXT,
+  collection_center_id TEXT REFERENCES collection_centers(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### Fields
+
+- **id**: Unique identifier (format: `gen_[timestamp]`)
+- **name**: Business/generator name
+- **rif**: Tax identification number (RIF)
+- **phone**: Contact phone
+- **address**: Physical address
+- **sector**: Geographic sector/neighborhood
+- **collection_mode**: Collection frequency ("Semanal", "Quincenal", "Mensual", "Fortuito")
+- **collection_center_id**: Assigned collection center
+- **created_at**: Record creation timestamp
+
+### Relationships
+
+- **Belongs to**: collection_centers
+- **Referenced by**: tickets.generator_id (CASCADE delete)
+
+### Indexes
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_generators_name 
+  ON generators(name);
+
+CREATE INDEX IF NOT EXISTS idx_generators_collection_center_id 
+  ON generators(collection_center_id);
+```
+
+</Accordion>
+
+<Accordion title="vehicles - Collection Vehicles">
+
+Stores vehicle information used for material collection and transport.
+
+### Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS vehicles (
+  id TEXT PRIMARY KEY,
+  plate TEXT NOT NULL UNIQUE,
+  brand TEXT,
+  model TEXT,
+  owner TEXT,
+  is_default BOOLEAN NOT NULL DEFAULT false,
+  collection_center_id TEXT REFERENCES collection_centers(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### Fields
+
+- **id**: Unique identifier (format: `veh_[timestamp]`)
+- **plate**: License plate number (UNIQUE constraint)
+- **brand**: Vehicle brand/manufacturer
+- **model**: Vehicle model
+- **owner**: Vehicle owner name
+- **is_default**: Whether this is the default vehicle for the center
+- **collection_center_id**: Assigned collection center
+- **created_at**: Record creation timestamp
+
+### Relationships
+
+- **Belongs to**: collection_centers
+- **Referenced by**: dispatches.vehicle_id
+
+### Indexes
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_vehicles_is_default 
+  ON vehicles(is_default);
+
+CREATE INDEX IF NOT EXISTS idx_vehicles_collection_center_id 
+  ON vehicles(collection_center_id);
+```
+
+</Accordion>
+
+<Accordion title="tickets - Collection Tickets">
+
+Records individual collection events (material intake from generators).
+
+### Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS tickets (
+  id TEXT PRIMARY KEY,
+  ticket_number TEXT NOT NULL UNIQUE,
+  date TEXT NOT NULL,
+  generator_id TEXT NOT NULL REFERENCES generators(id) ON DELETE CASCADE,
+  generator_name TEXT NOT NULL,
+  material_type TEXT,
+  quantity NUMERIC,
+  material_state TEXT,
+  collection_center_id TEXT REFERENCES collection_centers(id) ON DELETE SET NULL,
+  collector_member_id TEXT REFERENCES collection_center_members(id) ON DELETE SET NULL,
+  collector_name TEXT,
+  vehicle_plate TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### Fields
+
+- **id**: Unique identifier (format: `t_[timestamp]`)
+- **ticket_number**: Human-readable ticket number (format: `AV-[STATE]-[YEAR]-[SEQUENCE]`)
+- **date**: Collection date (stored as TEXT in DD/MM/YYYY or YYYY-MM-DD format)
+- **generator_id**: Foreign key to generators
+- **generator_name**: Denormalized generator name for reporting
+- **material_type**: Type of material collected (e.g., "Aceite Vegetal Usado (AVU) - No Peligroso")
+- **quantity**: Quantity in liters
+- **material_state**: State of material ("Bruto", "Filtrado")
+- **collection_center_id**: Foreign key to collection center
+- **collector_member_id**: Foreign key to collector member
+- **collector_name**: Denormalized collector name
+- **vehicle_plate**: Vehicle used for collection
+- **created_at**: Record creation timestamp
+
+### Relationships
+
+- **Belongs to**: generators (CASCADE delete), collection_centers, collection_center_members
+
+### Indexes
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_tickets_generator_id 
+  ON tickets(generator_id);
+
+CREATE INDEX IF NOT EXISTS idx_tickets_date 
+  ON tickets(date);
+
+CREATE INDEX IF NOT EXISTS idx_tickets_created_at 
+  ON tickets(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_tickets_collection_center_id 
+  ON tickets(collection_center_id);
+
+CREATE INDEX IF NOT EXISTS idx_tickets_collector_member_id 
+  ON tickets(collector_member_id);
+
+-- Trigram indexes for ILIKE searches
+CREATE INDEX IF NOT EXISTS idx_tickets_ticket_number_trgm 
+  ON tickets USING GIN (ticket_number gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_tickets_generator_name_trgm 
+  ON tickets USING GIN (generator_name gin_trgm_ops);
+```
+
+</Accordion>
+
+<Accordion title="dispatches - Material Dispatches">
+
+Records outbound shipments of collected materials to processing facilities.
+
+### Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS dispatches (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL,
+  description TEXT,
+  presentation TEXT,
+  dispatched_quantity NUMERIC,
+  destination_name TEXT,
+  destination_rif TEXT,
+  destination_address TEXT,
+  vehicle_id TEXT REFERENCES vehicles(id) ON DELETE SET NULL,
+  driver_name TEXT,
+  driver_id TEXT,
+  minec_guide_number TEXT,
+  collection_center_id TEXT REFERENCES collection_centers(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### Fields
+
+- **id**: Unique identifier (format: `disp_[timestamp]`)
+- **date**: Dispatch date (TEXT format: DD/MM/YYYY or YYYY-MM-DD)
+- **description**: Material description
+- **presentation**: Presentation format (e.g., "Litros")
+- **dispatched_quantity**: Quantity dispatched
+- **destination_name**: Destination facility name
+- **destination_rif**: Destination tax ID
+- **destination_address**: Destination address
+- **vehicle_id**: Foreign key to vehicles
+- **driver_name**: Driver's name
+- **driver_id**: Driver's ID number
+- **minec_guide_number**: MINEC guide number (regulatory document)
+- **collection_center_id**: Originating collection center
+- **created_at**: Record creation timestamp
+
+### Relationships
+
+- **Belongs to**: vehicles, collection_centers
+
+### Indexes
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_dispatches_date 
+  ON dispatches(date);
+
+CREATE INDEX IF NOT EXISTS idx_dispatches_vehicle_id 
+  ON dispatches(vehicle_id);
+
+CREATE INDEX IF NOT EXISTS idx_dispatches_collection_center_id 
+  ON dispatches(collection_center_id);
+```
+
+</Accordion>
+
+## Performance Optimizations
+
+### Standard Indexes
+
+The schema includes strategic B-tree indexes for:
+
+- Foreign key relationships (faster JOINs)
+- Frequently queried fields (name, date, created_at)
+- Boolean flags (is_default, is_active)
+
+### Trigram Indexes
+
+GIN trigram indexes enable efficient partial string matching:
+
+```sql
+CREATE INDEX idx_tickets_ticket_number_trgm 
+  ON tickets USING GIN (ticket_number gin_trgm_ops);
+
+CREATE INDEX idx_tickets_generator_name_trgm 
+  ON tickets USING GIN (generator_name gin_trgm_ops);
+```
+
+These support fast `ILIKE '%search%'` queries for ticket and generator searches.
+
+## Migrations
+
+The schema file (`db/schema.sql`) is consolidated and includes all migrations. To apply the schema:
+
+```bash
+psql -U postgres -d tickets -f db/schema.sql
+```
+
+<Tip>
+The schema uses `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS` statements, making it safe to re-run for updates.
+</Tip>
+
+### Loading Seed Data
+
+After creating the schema, load initial data:
+
+```bash
+pnpm db:seed
+# or
+psql -U postgres -d tickets -f db/seed.sql
+```
+
+## Data Integrity
+
+### Referential Integrity
+
+- **CASCADE**: When a generator is deleted, all its tickets are also deleted
+- **SET NULL**: When a collection center is deleted, related records preserve data but clear the foreign key
+
+### Constraints
+
+- **UNIQUE**: Vehicle plates and ticket numbers must be unique
+- **CHECK**: app_configuration enforces single-row constraint
+- **NOT NULL**: Critical fields like names and dates are required
+
+## Query Patterns
+
+### Date Handling
+
+Dates are stored as TEXT but queried with PostgreSQL date functions:
+
+```sql
+CASE
+  WHEN date ~ '^\d{1,2}/\d{1,2}/\d{4}$' THEN TO_DATE(date, 'DD/MM/YYYY')
+  WHEN date ~ '^\d{4}-\d{1,2}-\d{1,2}$' THEN TO_DATE(date, 'YYYY-MM-DD')
+  ELSE NULL
+END
+```
+
+### Ticket Numbering
+
+Ticket numbers follow the format: `AV-[STATE_CODE]-[YEAR]-[SEQUENCE]`
+
+- **STATE_CODE**: First 3 letters of the state name (normalized)
+- **YEAR**: Extracted from ticket date
+- **SEQUENCE**: Zero-padded 4-digit number
+
+Examples: `AV-BOL-2026-0001`, `AV-MER-2026-0023`

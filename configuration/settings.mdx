@@ -1,0 +1,213 @@
+---
+title: Settings
+description: Configure application settings and manage system preferences
+---
+
+## Overview
+
+The Configuration page provides centralized management for collection centers, team members, and application settings. This is where you set up the organizational structure that supports your daily operations.
+
+## Active Collection Center
+
+The most important setting is the active collection center, which determines:
+
+- Which data is displayed throughout the application
+- Which center receives new tickets
+- Which team members appear in dropdowns
+- Which vehicles are available for selection
+- Which generators are shown in lists
+
+### Viewing Active Center
+
+On the Configuration page, you'll see a read-only display of the currently active collection center:
+
+- **Center name**: The display name of the active center
+- **Address**: Full street address
+- **City and State**: Location information
+
+<Note>
+The active center display is read-only on the Configuration page. To change the active center, navigate to the Dashboard where you'll find a dropdown to select a different center.
+</Note>
+
+### Changing Active Center
+
+To switch to a different collection center:
+
+1. Navigate to the Dashboard view
+2. Locate the active center dropdown selector
+3. Choose your desired center from the list
+4. The application will reload data for the newly selected center
+
+<Warning>
+Changing the active center immediately affects all data views throughout the application. Make sure you're ready to switch contexts before changing centers.
+</Warning>
+
+## System Configuration
+
+The Configuration page is organized into several sections:
+
+### Collection Centers Management
+
+This section allows you to:
+
+- Create new collection centers with full location details
+- Edit existing center information (name, state, city, address)
+- Delete centers that are no longer needed
+- View all centers in a sortable table
+
+**Fields for Collection Centers:**
+- **Nombre** (Name): Required - Display name for the center
+- **Estado** (State): The state or province location
+- **Ciudad** (City): City where the center operates
+- **Dirección** (Address): Complete street address
+
+### Team Members Management
+
+Accessed via the "Gestionar Miembros (Modal)" button:
+
+- Add team members to the active collection center
+- Edit member information (name, ID, phone, role)
+- Remove members who have left
+- View complete roster for the active center
+
+**Fields for Team Members:**
+- **Nombre completo** (Full name): Required - Member's complete name
+- **Cédula** (ID number): Optional national identification
+- **Teléfono** (Phone): Contact phone number
+- **Rol** (Role): Job title (defaults to "Recolector")
+
+## Application Preferences
+
+The application automatically manages several settings:
+
+### Data Scope
+
+All data is automatically scoped to the active collection center:
+
+- Tickets list shows only tickets for the active center
+- Dashboard metrics calculate based on the active center
+- Generators are filtered to those assigned to the active center
+- Vehicles list shows only the active center's fleet
+
+### First-Time Setup
+
+<Steps>
+  <Step title="Create your first center">
+    Add a collection center with complete location information in the Configuration page.
+  </Step>
+  
+  <Step title="Activate the center">
+    Go to the Dashboard and select your new center as the active center.
+  </Step>
+  
+  <Step title="Add team members">
+    Return to Configuration and add staff members who will use the system.
+  </Step>
+  
+  <Step title="Begin operations">
+    Start adding generators, vehicles, and creating tickets.
+  </Step>
+</Steps>
+
+## Data Management
+
+### Data Isolation
+
+The application maintains strict data isolation between centers:
+
+- Each center's data is completely separate
+- Generators belong to specific centers
+- Tickets are linked to the center where they were created
+- Team members are assigned to individual centers
+- Vehicle fleets are center-specific
+
+### Data Migration
+
+<Note>
+If you're the first center being created, the system will automatically migrate any existing legacy data (generators, vehicles, tickets without a center assignment) to the new center.
+</Note>
+
+### Destructive Actions
+
+<Warning>
+**Deleting a Collection Center**
+
+Deleting a collection center permanently removes:
+- All generators assigned to that center
+- All tickets created at that center
+- All team members for that center
+- All vehicles assigned to that center
+
+This action cannot be undone. Export your data before deletion if you need to preserve records.
+</Warning>
+
+<Warning>
+**Deleting Team Members**
+
+Deleting a team member removes them from the roster but doesn't affect historical ticket records where they were assigned as the collector. Use this carefully to maintain data integrity.
+</Warning>
+
+## Configuration Workflow
+
+A typical configuration workflow:
+
+1. **Initial Setup**
+   - Create collection centers for each physical location
+   - Set one as the active center in Dashboard
+   - Add team members for the active center
+
+2. **Daily Operations**
+   - Switch active center in Dashboard as needed
+   - Work with data specific to the active center
+   - Add new team members when staff joins
+
+3. **Maintenance**
+   - Update center information if locations change
+   - Edit team member details to keep records current
+   - Remove inactive members to keep lists clean
+
+## Troubleshooting
+
+### "No active center configured" error
+
+If you see this error:
+
+1. You need to create a collection center first
+2. Then activate it from the Dashboard
+3. Return to the feature that showed the error
+
+### Can't add team members
+
+If the "Gestionar Miembros" button shows an alert:
+
+1. Check that you have an active center set
+2. Navigate to Dashboard to select a center
+3. Return to Configuration to add members
+
+### Wrong data showing
+
+If you're seeing unexpected data:
+
+1. Check which center is currently active
+2. Switch to the correct center from the Dashboard
+3. Data is scoped per center, so ensure you're in the right context
+
+## Related Topics
+
+<CardGroup cols={2}>
+  <Card title="Collection Centers" icon="building" href="/configuration/collection-centers">
+    Detailed guide on managing multiple collection centers
+  </Card>
+  
+  <Card title="Team Management" icon="users" href="/configuration/team-management">
+    Complete guide to managing team members and roles
+  </Card>
+  
+  <Card title="Dashboard" icon="chart-line" href="/features/dashboard">
+    Learn about the Dashboard where you change the active center
+  </Card>
+  
+  <Card title="Creating Tickets" icon="ticket" href="/features/tickets">
+    See how configuration affects ticket creation
+  </Card>
+</CardGroup>

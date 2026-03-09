@@ -1,0 +1,150 @@
+---
+title: Dashboard and Analytics
+description: Real-time monitoring and analytics for used vegetable oil (AVU) collection operations
+---
+
+The Dashboard provides a comprehensive overview of collection operations, displaying key metrics, trends, and recent activity at a glance. It serves as the command center for monitoring your AVU collection business.
+
+## Overview
+
+The Dashboard displays:
+
+- **Key Performance Indicators**: Total collected volume, active clients, tickets issued, and total dispatched
+- **Visual Analytics**: Area charts showing collection trends over time with entry and exit volumes
+- **Recent Activity**: Last five tickets created for quick access
+- **Filter System**: Advanced filtering by date ranges, months, years, and generators
+- **Report Generation**: Automatic creation of collection confirmation reports (Actas)
+
+## Key Metrics
+
+The dashboard displays four main statistics cards:
+
+<CardGroup cols={2}>
+  <Card title="Total Collected" icon="droplet">
+    Total liters collected across all active generators, with percentage growth trend
+  </Card>
+  <Card title="Active Clients" icon="users">
+    Number of generators (clients) currently registered in the system
+  </Card>
+  <Card title="Tickets Issued" icon="package">
+    Total count of collection tickets created
+  </Card>
+  <Card title="Total Dispatched" icon="trending-up">
+    Total liters dispatched to processing facilities (shown when no generator filter is applied)
+  </Card>
+</CardGroup>
+
+## Collection Center Selection
+
+At the top of the dashboard, select your active collection center:
+
+- Changes the active center for all operations
+- Filters data to show only information relevant to that center
+- Automatically updates available generators for that location
+- Required before creating new tickets
+
+<Note>
+Changing the collection center will clear your current generator filters and reload the dashboard data.
+</Note>
+
+## Filtering Data
+
+The dashboard provides multiple filter options:
+
+### Date Range Filters
+
+- **From/To Dates**: Specify exact date ranges for analysis
+- **Month/Year**: Quick selection for monthly reports
+- **Generator**: Filter by specific client(s) to view their collection history
+
+### Generator Multi-Select
+
+- Search generators by name
+- Select multiple generators to compare data
+- Shows "Todos" (All) when no filter is applied
+- Displays count badge when multiple generators selected
+
+<Tip>
+Use the generator filter to analyze collection patterns for specific clients or client groups.
+</Tip>
+
+## Volume Chart
+
+The area chart visualizes collection trends:
+
+- **Green Line (Entrada)**: Liters collected from generators
+- **Orange Line (Salida)**: Liters dispatched to processing facilities
+- **X-Axis**: Date progression
+- **Y-Axis**: Volume in liters
+
+The chart updates automatically based on your filter selections.
+
+## Recent Tickets Widget
+
+Displays the last 5 tickets created:
+
+- Ticket number and date
+- Generator name
+- Quantity collected
+- Quick access to print view
+
+<Warning>
+Recent tickets shown are based on your current filter selections. Clear filters to see the most recent tickets across all operations.
+</Warning>
+
+## Generating Collection Reports (Actas)
+
+The dashboard includes a powerful report generator for creating official collection confirmation documents:
+
+<Steps>
+  <Step title="Select Single Generator">
+    Choose exactly ONE generator from the filter dropdown. The "Generar acta" button is only enabled when a single generator is selected.
+  </Step>
+  
+  <Step title="Choose Time Period">
+    Select either:
+    - Month and Year, OR
+    - Custom date range (From/To)
+  </Step>
+  
+  <Step title="Generate Report">
+    Click "Generar acta" to create the official PDF document
+  </Step>
+  
+  <Step title="Review and Print">
+    The report opens in a new window with:
+    - Generator information (name, RIF)
+    - Total volume collected in the period
+    - List of ticket numbers
+    - Collection frequency (weekly, biweekly, monthly, etc.)
+    - Official declaration and signatures section
+  </Step>
+</Steps>
+
+## Report Contents
+
+The generated "Acta de Confirmación de Servicio" includes:
+
+- **Generator Details**: Business name, RIF, collection mode
+- **Period**: Month/year or custom date range
+- **Volume Summary**: Total liters collected with ticket numbers
+- **Collection Frequency**: Checkboxes for Semanal, Quincenal, Mensual, Fortuito, Otro
+- **Compliance Declaration**: Legal text confirming material origin and handling permits
+- **Signature Blocks**: For both generator representative and Alternativa Verde 2023
+
+<Note>
+Reports are generated with the company logo and automatically formatted for printing. The document includes MINEC permit information and legal compliance text.
+</Note>
+
+## Quick Actions
+
+- **Nuevo Ticket Button**: Green button in top-right corner to create a new collection ticket
+- **Clear Filters**: Reset all filters to view complete dataset
+- **Print Access**: Click any recent ticket to view and print details
+
+## Related Features
+
+- [Ticket Management](/features/tickets) - Create and manage collection tickets
+- [Generator Management](/features/generators) - Manage client information
+- [History and Reporting](/features/history) - Access complete collection history
+- [Collection Centers API](/api/collection-centers) - Configure centers programmatically

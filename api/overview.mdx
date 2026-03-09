@@ -1,0 +1,163 @@
+---
+title: API Overview
+description: Introduction to the Alternativa Verde REST API
+---
+
+The Alternativa Verde API is a RESTful web service built with Express.js and PostgreSQL that manages waste oil collection operations, including tickets, generators, vehicles, dispatches, and collection centers.
+
+## Base URL
+
+The API runs on port 4000 by default:
+
+```
+http://localhost:4000
+```
+
+You can configure the port using the `PORT` environment variable.
+
+## Architecture
+
+The API is built with:
+
+- **Express.js** - Web framework for Node.js
+- **PostgreSQL** - Relational database with pg-trgm extension for text search
+- **CORS** - Enabled for all origins
+- **JSON** - Request and response format
+
+## Common Patterns
+
+### Collection Center Filtering
+
+Many endpoints support filtering by collection center using the `collectionCenterId` query parameter:
+
+```bash
+GET /api/tickets?collectionCenterId=center-123
+```
+
+If no `collectionCenterId` is provided, the API uses the active center from `app_configuration` table.
+
+### Error Responses
+
+All endpoints return JSON error responses with HTTP status codes:
+
+```json
+{
+  "error": "DB error"
+}
+```
+
+Common status codes:
+- `400` - Bad request (e.g., missing required configuration)
+- `500` - Database or server error
+
+### Date Formats
+
+The API accepts dates in two formats:
+- **DD/MM/YYYY** - e.g., `15/03/2026`
+- **YYYY-MM-DD** - e.g., `2026-03-15`
+
+Date parsing is flexible and handles both formats throughout the system.
+
+### ID Generation
+
+All resource IDs are client-generated strings (typically UUIDs). The client must provide the `id` field when creating resources.
+
+**Ticket numbers** are auto-generated server-side using the pattern:
+```
+AV-{STATE_CODE}-{YEAR}-{SEQUENCE}
+```
+
+Example: `AV-MIR-2026-0001`
+
+- State code is derived from the collection center's state (first 3 letters, normalized)
+- Year is extracted from the ticket date
+- Sequence is auto-incremented per series using database advisory locks
+
+### Response Formats
+
+All successful responses return JSON. List endpoints return arrays directly:
+
+```json
+[
+  { "id": "1", "name": "Generator A" },
+  { "id": "2", "name": "Generator B" }
+]
+```
+
+Paginated endpoints return an object with `items` and `total`:
+
+```json
+{
+  "items": [...],
+  "total": 150
+}
+```
+
+## Quick Start Example
+
+```bash
+# Get all generators
+curl http://localhost:4000/api/generators
+
+# Get generators for a specific collection center
+curl http://localhost:4000/api/generators?collectionCenterId=center-123
+
+# Get paginated tickets with search
+curl "http://localhost:4000/api/tickets?limit=20&offset=0&search=AV-MIR"
+```
+
+## API Endpoints
+
+The API is organized into the following resource categories:
+
+<CardGroup cols={2}>
+  <Card title="Tickets" icon="ticket" href="/api/tickets">
+    Collection tickets (boletas) - create, list, search, and report
+  </Card>
+  
+  <Card title="Generators" icon="industry" href="/api/generators">
+    Waste oil generators (clients) - CRUD operations
+  </Card>
+  
+  <Card title="Vehicles" icon="truck" href="/api/vehicles">
+    Collection vehicles - CRUD with default vehicle management
+  </Card>
+  
+  <Card title="Dispatches" icon="box" href="/api/dispatches">
+    Dispatch records (salidas) - outbound shipments
+  </Card>
+  
+  <Card title="Collection Centers" icon="building" href="/api/collection-centers">
+    Collection center management and members
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/api/configuration">
+    App configuration - active collection center
+  </Card>
+  
+  <Card title="Dashboard" icon="chart-line" href="/api/dashboard">
+    Analytics and statistics with date filtering
+  </Card>
+</CardGroup>
+
+## Database Connection
+
+The API connects to PostgreSQL using environment variables:
+
+- `PGHOST` (default: `127.0.0.1`)
+- `PGPORT` (default: `5432`)
+- `PGUSER` (default: `postgres`)
+- `PGPASSWORD`
+- `PGDATABASE` (default: `tickets`)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/api/authentication">
+    Learn about API security and authentication
+  </Card>
+  
+  <Card title="Tickets Endpoint" icon="ticket" href="/api/tickets">
+    Start with the core tickets functionality
+  </Card>
+</CardGroup>

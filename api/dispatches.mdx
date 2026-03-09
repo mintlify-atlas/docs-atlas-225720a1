@@ -1,0 +1,340 @@
+---
+title: "Dispatches API"
+description: "Manage oil dispatches (salidas) to destinations"
+---
+
+## List Dispatches
+
+`GET /api/dispatches`
+
+Retrieve all dispatches with vehicle information, optionally filtered by collection center.
+
+### Query Parameters
+
+<ParamField query="collectionCenterId" type="string">
+  Filter dispatches by collection center ID. If not provided, uses the active center from configuration.
+</ParamField>
+
+### Response
+
+Returns an array of dispatch objects sorted by `created_at DESC`, with vehicle information joined.
+
+<Expandable title="Dispatch Object">
+  <ResponseField name="id" type="string">
+    Unique dispatch identifier
+  </ResponseField>
+  <ResponseField name="date" type="string">
+    Dispatch date (DD/MM/YYYY or YYYY-MM-DD)
+  </ResponseField>
+  <ResponseField name="description" type="string | null">
+    Description of the dispatched material
+  </ResponseField>
+  <ResponseField name="presentation" type="string | null">
+    Presentation format (e.g., "Tanque", "Bidones")
+  </ResponseField>
+  <ResponseField name="dispatched_quantity" type="number | null">
+    Quantity dispatched in liters
+  </ResponseField>
+  <ResponseField name="destination_name" type="string | null">
+    Name of the destination company/entity
+  </ResponseField>
+  <ResponseField name="destination_rif" type="string | null">
+    Tax ID (RIF) of the destination
+  </ResponseField>
+  <ResponseField name="destination_address" type="string | null">
+    Physical address of the destination
+  </ResponseField>
+  <ResponseField name="vehicle_id" type="string | null">
+    ID of the vehicle used for dispatch
+  </ResponseField>
+  <ResponseField name="vehicle_plate" type="string">
+    License plate of the dispatch vehicle (joined from vehicles table)
+  </ResponseField>
+  <ResponseField name="vehicle_brand" type="string">
+    Brand of the dispatch vehicle (joined from vehicles table)
+  </ResponseField>
+  <ResponseField name="vehicle_model" type="string">
+    Model of the dispatch vehicle (joined from vehicles table)
+  </ResponseField>
+  <ResponseField name="driver_name" type="string | null">
+    Name of the driver
+  </ResponseField>
+  <ResponseField name="driver_id" type="string | null">
+    Driver's identification number
+  </ResponseField>
+  <ResponseField name="minec_guide_number" type="string | null">
+    MINEC guide number (government transport guide)
+  </ResponseField>
+  <ResponseField name="collection_center_id" type="string | null">
+    Associated collection center ID
+  </ResponseField>
+  <ResponseField name="created_at" type="string">
+    Timestamp when dispatch was created
+  </ResponseField>
+</Expandable>
+
+### Example Request
+
+```bash
+curl http://localhost:4000/api/dispatches?collectionCenterId=center-1
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": "dispatch-1",
+    "date": "09/03/2026",
+    "description": "Aceite Vegetal Usado Filtrado",
+    "presentation": "Tanque",
+    "dispatched_quantity": 500.0,
+    "destination_name": "Procesadora Central C.A.",
+    "destination_rif": "J-11111111-1",
+    "destination_address": "Zona Industrial, Galpón 5",
+    "vehicle_id": "vehicle-1",
+    "vehicle_plate": "ABC-123",
+    "vehicle_brand": "Toyota",
+    "vehicle_model": "Hilux 2020",
+    "driver_name": "Carlos Rodríguez",
+    "driver_id": "V-12345678",
+    "minec_guide_number": "MG-2026-001234",
+    "collection_center_id": "center-1",
+    "created_at": "2026-03-09T14:00:00Z"
+  }
+]
+```
+
+---
+
+## Create Dispatch
+
+`POST /api/dispatches`
+
+Create a new dispatch record.
+
+### Request Body
+
+<ParamField body="id" type="string" required>
+  Unique dispatch identifier (UUID)
+</ParamField>
+
+<ParamField body="date" type="string" required>
+  Dispatch date (DD/MM/YYYY or YYYY-MM-DD)
+</ParamField>
+
+<ParamField body="description" type="string">
+  Description of the dispatched material
+</ParamField>
+
+<ParamField body="presentation" type="string">
+  Presentation format (e.g., "Tanque", "Bidones")
+</ParamField>
+
+<ParamField body="dispatchedQuantity" type="number">
+  Quantity dispatched in liters
+</ParamField>
+
+<ParamField body="destinationName" type="string">
+  Name of the destination company/entity
+</ParamField>
+
+<ParamField body="destinationRif" type="string">
+  Tax ID (RIF) of the destination
+</ParamField>
+
+<ParamField body="destinationAddress" type="string">
+  Physical address of the destination
+</ParamField>
+
+<ParamField body="vehicleId" type="string">
+  ID of the vehicle used for dispatch
+</ParamField>
+
+<ParamField body="driverName" type="string">
+  Name of the driver
+</ParamField>
+
+<ParamField body="driverId" type="string">
+  Driver's identification number
+</ParamField>
+
+<ParamField body="minecGuideNumber" type="string">
+  MINEC guide number (government transport guide)
+</ParamField>
+
+### Response
+
+Returns the created dispatch object with `created_at` timestamp.
+
+<Note>
+  The `collectionCenterId` is automatically determined from the request context or active configuration.
+</Note>
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:4000/api/dispatches \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "dispatch-new-1",
+    "date": "09/03/2026",
+    "description": "Aceite Vegetal Usado Filtrado",
+    "presentation": "Tanque",
+    "dispatchedQuantity": 500.0,
+    "destinationName": "Procesadora Central C.A.",
+    "destinationRif": "J-11111111-1",
+    "destinationAddress": "Zona Industrial, Galpón 5",
+    "vehicleId": "vehicle-1",
+    "driverName": "Carlos Rodríguez",
+    "driverId": "V-12345678",
+    "minecGuideNumber": "MG-2026-001234"
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "id": "dispatch-new-1",
+  "date": "09/03/2026",
+  "description": "Aceite Vegetal Usado Filtrado",
+  "presentation": "Tanque",
+  "dispatched_quantity": 500.0,
+  "destination_name": "Procesadora Central C.A.",
+  "destination_rif": "J-11111111-1",
+  "destination_address": "Zona Industrial, Galpón 5",
+  "vehicle_id": "vehicle-1",
+  "driver_name": "Carlos Rodríguez",
+  "driver_id": "V-12345678",
+  "minec_guide_number": "MG-2026-001234",
+  "collection_center_id": "center-1",
+  "created_at": "2026-03-09T14:00:00Z"
+}
+```
+
+---
+
+## Update Dispatch
+
+`PUT /api/dispatches/:id`
+
+Update an existing dispatch.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Dispatch ID
+</ParamField>
+
+### Request Body
+
+<ParamField body="date" type="string" required>
+  Dispatch date
+</ParamField>
+
+<ParamField body="description" type="string">
+  Description of the dispatched material
+</ParamField>
+
+<ParamField body="presentation" type="string">
+  Presentation format
+</ParamField>
+
+<ParamField body="dispatchedQuantity" type="number">
+  Quantity dispatched in liters
+</ParamField>
+
+<ParamField body="destinationName" type="string">
+  Destination name
+</ParamField>
+
+<ParamField body="destinationRif" type="string">
+  Destination RIF
+</ParamField>
+
+<ParamField body="destinationAddress" type="string">
+  Destination address
+</ParamField>
+
+<ParamField body="vehicleId" type="string">
+  Vehicle ID
+</ParamField>
+
+<ParamField body="driverName" type="string">
+  Driver name
+</ParamField>
+
+<ParamField body="driverId" type="string">
+  Driver identification
+</ParamField>
+
+<ParamField body="minecGuideNumber" type="string">
+  MINEC guide number
+</ParamField>
+
+### Response
+
+Returns the updated dispatch object.
+
+### Example Request
+
+```bash
+curl -X PUT http://localhost:4000/api/dispatches/dispatch-1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "date": "09/03/2026",
+    "description": "Aceite Vegetal Usado Filtrado Premium",
+    "presentation": "Tanque",
+    "dispatchedQuantity": 550.0,
+    "destinationName": "Procesadora Central C.A.",
+    "destinationRif": "J-11111111-1",
+    "destinationAddress": "Zona Industrial, Galpón 5",
+    "vehicleId": "vehicle-1",
+    "driverName": "Carlos Rodríguez",
+    "driverId": "V-12345678",
+    "minecGuideNumber": "MG-2026-001234"
+  }'
+```
+
+---
+
+## Delete Dispatch
+
+`DELETE /api/dispatches/:id`
+
+Delete a dispatch by its ID.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  Dispatch ID
+</ParamField>
+
+### Response
+
+<ResponseField name="ok" type="boolean">
+  Returns `true` if deletion was successful
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X DELETE http://localhost:4000/api/dispatches/dispatch-1
+```
+
+### Example Response
+
+```json
+{
+  "ok": true
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "DB delete error"
+}
+```
